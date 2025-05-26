@@ -71,11 +71,10 @@
 #            {"dense_vector":output_3["dense_vecs"],"sparse_vector":output_3["lexical_weights"]}],
 # )
 
-# 1 Initialize all objects
 
 import os
 
-from pymilvus import AnnSearchRequest, WeightedRanker
+from pymilvus import  WeightedRanker
 from classes.InputManager import FAQInputManager
 from classes.ModelManager import ModelManager
 from FlagEmbedding import BGEM3FlagModel
@@ -93,13 +92,16 @@ faq_sentences = faq_input_manager.extract_sentences_from_csv(csv_path)
 for sentence in faq_sentences:
   model_manager.generate_vector_and_save(sentence) 
 
-query="Kann ich einen bestellten Container abbestellen?"
-query_embedding = model_manager.generate_embeddings(query)
+######## Bis hierhin local, danach als fastapi auf dem server
 
-res = model_manager.db.search(query_embedding)
 
-for hits in res:
-    print("TopK results:")
-    for hit in hits:
-        print(hit)
+# query="Kann ich einen bestellten Container abbestellen?"
+# query_embedding = model_manager.generate_embeddings(query)
+
+# res = model_manager.db.search(query_embedding)
+
+# for hits in res:
+#     print("TopK results:")
+#     for hit in hits:
+#         print(hit)
 

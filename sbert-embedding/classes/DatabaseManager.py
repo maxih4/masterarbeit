@@ -61,14 +61,13 @@ class DatabaseManager:
         :param schema: Schema for the collection.
         :param index_params: Index parameters for the collection.
         """
-        if self.client.has_collection(collection_name=self.collection_name):
-            self.client.drop_collection(collection_name=self.collection_name)
-        
-        self.client.create_collection(
-            collection_name=self.collection_name,
-            schema=schema,
-            index_params=index_params
-        )
+        if self.client.has_collection(collection_name=self.collection_name) == False:
+            self.client.create_collection(
+                collection_name=self.collection_name,
+                schema=schema,
+                index_params=index_params
+            )        
+
 
     def insert_sentence(self,sentence:Sentence):
         self.client.insert(collection_name=self.collection_name,
