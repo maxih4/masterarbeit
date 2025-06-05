@@ -3,7 +3,7 @@ from pymilvus import  WeightedRanker
 from classes.ModelManager import ModelManager
 from FlagEmbedding import BGEM3FlagModel
 from fastapi import FastAPI, Request
-from transformers import pipeline
+from transformers.pipelines import pipeline
 
 
 
