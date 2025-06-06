@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
+from langchain_community.document_loaders.csv_loader import CSVLoader
 
 
 class InputManager(ABC):
@@ -23,15 +24,21 @@ class FAQInputManager(InputManager):
         :param csv_file: Path to the CSV file.
         :return: List of sentences extracted from the CSV file.
         """
-        import csv
+        # import csv
 
+        # sentences = []
+        # with open(csv_file, newline='', encoding='utf-8') as file:
+        #     reader = csv.reader(file, delimiter=';')
+        #     next(reader, None)  # Skip the header row
+        #     for row in reader:
+        #         if row:  # Make sure the row is not empty
+        #              sentences.append(row[0] + " : " + row[1])  # Assuming the first column is the question and the second is the answer
+        # return sentences
         sentences = []
-        with open(csv_file, newline='', encoding='utf-8') as file:
-            reader = csv.reader(file, delimiter=';')
-            next(reader, None)  # Skip the header row
-            for row in reader:
-                if row:  # Make sure the row is not empty
-                     sentences.append(row[0] + " : " + row[1])  # Assuming the first column is the question and the second is the answer
+        loader = CSVLoader(file_path=csv_file, csv_args={"delimiter": ";"},encoding="utf-8")
+        data = loader.load()
+
+        for row in data:
+            sentences.append(row.page_content)
         return sentences
-      
        
