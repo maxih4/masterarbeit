@@ -3,7 +3,8 @@ from classes.ModelManager import ModelManager
 from classes.InputManager import FAQInputManager
 from langchain_ollama import ChatOllama
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_milvus import Milvus,BM25BuiltInFunction
+from langchain_milvus import Milvus, BM25BuiltInFunction
+from psycopg_pool import AsyncConnectionPool
 
 
 model_manager = ModelManager(
@@ -21,11 +22,16 @@ db_manager = DatabaseManager(
         embedding_function=model_manager.embedding_model,
         connection_args={"uri": "http://localhost:19530"},
         builtin_function=BM25BuiltInFunction(),
+        # `dense` is for OpenAI embeddings, `sparse` is the output field of BM25 function
         vector_field=["dense", "sparse"],
         auto_id=True,
-        drop_old=True
-    )
+    ),
+    conn_pool=AsyncConnectionPool(
+        conninfo="postgresql://postgres:example@localhost:5432/postgres?sslmode=disable",
+        max_size=10,
+        open=False,
+    ),
 )
 
-
 faq_input_manager = FAQInputManager()
+
