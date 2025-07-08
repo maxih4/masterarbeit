@@ -1,6 +1,5 @@
-from classes.DatabaseManager import DatabaseManager
-from classes.ModelManager import ModelManager
-from classes.InputManager import FAQInputManager
+from modules.DatabaseManager import DatabaseManager
+from modules.ModelManager import ModelManager
 from langchain_ollama import ChatOllama
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_milvus import Milvus, BM25BuiltInFunction
@@ -9,7 +8,7 @@ from psycopg_pool import AsyncConnectionPool
 
 model_manager = ModelManager(
     llm_model=ChatOllama(
-        model="llama3.2",
+        model="qwen2.5:7b",
         temperature=0,
     ),
     embedding_model=HuggingFaceEmbeddings(
@@ -33,5 +32,4 @@ db_manager = DatabaseManager(
     ),
 )
 
-faq_input_manager = FAQInputManager()
 

@@ -1,47 +1,33 @@
-from langchain_core.documents import Document
+import logging
 from langgraph.graph import START, StateGraph
 from langchain.prompts import ChatPromptTemplate
 from psycopg_pool import AsyncConnectionPool
-from modules import  db_manager,model_manager
+from module_instances import  db_manager,model_manager
 from langchain.schema import HumanMessage, AIMessage
 from typing import Literal, TypedDict, Optional, List, Union
 from langchain.schema.document import Document
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from pydantic import BaseModel, Field
-from langgraph.types import Command
 
 
 
 
 
 
-
-first_prompt = ChatPromptTemplate([
-    ("system", 
-     "You are a multilingual assistant that prepares user inputs for a company-specific question-answering system. "
-     "Follow these steps carefully:\n\n"
-     "1. Determine whether the user input is:\n"
-     "   a) A company-specific request (e.g. services, pricing, recycling procedures, containers, scheduling, etc.)\n"
-     "   b) Small talk or general chit-chat (e.g. 'How are you?', jokes, personal questions)\n\n"
-     "2. If the input is small talk or irrelevant, do NOT provide an answer. Instead, respond politely but clearly, in the user's language, with something like:\n"
-     "   'Dafür habe ich leider keine Zeit – ich helfe gerade anderen Kunden. Hast du eine Frage zu unseren Dienstleistungen?'\n"
-     "   or\n"
-     "   'I don't have time for that – I'm currently helping other customers. Do you have a question about our services?'\n\n"
-     "3. If the input is company-specific:\n"
-     "   - Reformulate it into a concise, clear question as if coming directly from the user.\n"
-     "   - Use the latest chat history if relevant to disambiguate or complete the question.\n"
-     "   - If the question is already well-formed, repeat it unchanged.\n\n"
-     "Important:\n"
-     "- Never answer factual questions yourself.\n"
-     "- Only provide one question at maximum"
-     "- Do not change the perspective of the question (e.g. if the user asks 'What are your services?', do not change it to 'What services do I offer?').\n"
-     "- Always preserve and reflect the user's language (e.g. German input → German output).\n"
-     "- Output **either** a reformulated question **or** the polite refusal message. Never both."
+first_prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        "You are an expert assistant for a recycling company's question-answering system. "
+        "Your task is to rephrase the user's input into a clear, semantically meaningful, and complete question. "
+        "Preserve exactly the meaning and scope of the original input — do not add or assume any information that is not explicitly present. "
+        "Use the chat history only to resolve ambiguities, not to add unrelated topics. "
+        "Output only the improved question, nothing else."
+        "Do not add any words that are not needed to form a question. "
     ),
-    ("human", 
-     "User Input: {user_input}\n\n"
-     "Last Message in Chat History (optional): {chat_history}"
+    (
+        "human",
+        "User Input: {user_input}\n\n"
+        "Chat History (optional): {chat_history}"
     )
 ])
 
@@ -50,9 +36,6 @@ second_prompt = ChatPromptTemplate([
     ("human", "Context: {context}\n\nQuestion: {question}")
 ])
 
-class ClassifiedOutput(BaseModel):
-    type: Literal["question", "polite_answer"] = Field(description="Specifies whether the content is a question or a polite answer to small talk")
-    content: str = Field(description="Either the reformulated question or the direct answer")
 
 # Define state for application
 class State(TypedDict):
@@ -63,7 +46,6 @@ class State(TypedDict):
     last_user_message: List[HumanMessage]
     last_ai_message: List[AIMessage]
     last_user_question: List[AIMessage]
-
 
 
 
@@ -80,10 +62,11 @@ class RagManager:
         if self._graph is None:
             try:
                 graph_builder = StateGraph(State)
-                graph_builder.add_edge(START, "_form_query",)
                 graph_builder.add_node("_retrieve", self._retrieve)
                 graph_builder.add_node("_form_query", self._form_query)
                 graph_builder.add_node("_generate", self._generate)
+                graph_builder.add_edge(START, "_form_query")
+                graph_builder.add_edge("_form_query", "_retrieve")
                 graph_builder.add_edge("_retrieve", "_generate")
                 connection_pool = await self._get_connection_pool()
                 if connection_pool:
@@ -120,29 +103,32 @@ class RagManager:
             "chat_history": last_question
         })
         
-        structured_llm = model_manager.llm_model.with_structured_output(ClassifiedOutput)
-        question = structured_llm.invoke(question_prompt)
-       # question = model_manager.llm_model.invoke(question_prompt)
-        #new_ai_message = AIMessage(content=question.content)
-       # return {"question": question.content, "last_user_question": [new_ai_message]}
-        if isinstance(question, ClassifiedOutput):
-            if (question.type=="question"):
-                goto = "_retrieve"
-            if( question.type=="polite_answer"):
-                goto = "END"
-            # polite_answer = question.content
-            # new_ai_message = AIMessage(content=polite_answer)
-            # state["last_ai_message"] = [new_ai_message]
-            # state["answer"] = polite_answer
-            # return {"question": "", "last_user_question": [], "last_ai_message": [new_ai_message], "answer": polite_answer}
-            return Command(update={
-            "question": question.content,
-            "last_user_question": question.content,
-            }, goto=goto)
+        #structured_llm = model_manager.llm_model.with_structured_output(ClassifiedOutput)
+        #question = structured_llm.invoke(question_prompt)
+        question = model_manager.llm_model.invoke(question_prompt)
+        new_ai_message = AIMessage(content=question.content)
+        return {"question": question.content, "last_user_question": [question.content]}
+        # if isinstance(question, ClassifiedOutput):
+        #     if (question.type=="question"):
+        #         goto = "_retrieve"
+        #     if( question.type=="polite_answer"):
+        #         goto = "END"
+        #     # polite_answer = question.content
+        #     # new_ai_message = AIMessage(content=polite_answer)
+        #     # state["last_ai_message"] = [new_ai_message]
+        #     # state["answer"] = polite_answer
+        #     # return {"question": "", "last_user_question": [], "last_ai_message": [new_ai_message], "answer": polite_answer}
+        #     return Command(update={
+        #     "question": question.content,
+        #     "last_user_question": question.content,
+        #     }, goto=goto)
+
 
     # Define steps
     def _retrieve(self, state: State):
         retrieved_docs = db_manager.vector_store.similarity_search(state["question"], k=3, ranker_type="rrf", ranker_params={"k": 100})
+        for doc in retrieved_docs:
+            print("Doc metadata:", doc.metadata)
         return {"context": retrieved_docs}
 
 

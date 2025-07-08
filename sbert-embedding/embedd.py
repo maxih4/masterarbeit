@@ -1,14 +1,24 @@
 import os
-from modules import faq_input_manager, db_manager
+from module_instances import  db_manager
+from modules.InputManager import FAQInputManager
+from modules.pipelines.BaseCSVPipeline import BaseCSVPipeline
 
+from utils.logging_config import configure_logging
+import logging
 
-try:
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_path = os.path.join(base_dir, "csv", "faq.csv")
+configure_logging()
+logger = logging.getLogger(__name__)
 
-    documents = faq_input_manager.extract_sentences_from_csv(csv_path)
-    db_manager.vector_store.add_documents(documents)
-    print("Sentences have been successfully added to the database.")
+pipelines = [
+    BaseCSVPipeline(FAQInputManager(), csv_path="csv/faq.csv")]
 
-except Exception as e:
-    print("An error occurred:", e)
+# Clear existing data
+
+db_manager.vector_store.delete(ids=None, expr="pk>0")
+logger.info("Cleared existing data in the vector store.")
+
+# Run pipelines
+for pipeline in pipelines:
+    pipeline.run()
+    logger.info(f"Pipeline {pipeline.__class__.__name__} completed successfully.")
+logger.info("Finished.")
