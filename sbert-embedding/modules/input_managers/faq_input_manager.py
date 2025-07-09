@@ -1,62 +1,45 @@
-from abc import ABC, abstractmethod
 from typing import List
-from langchain_community.document_loaders.csv_loader import CSVLoader
+
+from langchain_community.document_loaders import CSVLoader
 from langchain_core.documents import Document
 
 from module_instances import model_manager
+from modules.input_managers.base_input_manager import BaseInputManager
 
 
-class InputManager(ABC):
-    @abstractmethod
-    def extract_sentences_from_csv(self, csv_file: str) -> List[Document]:
-        """
-        Extract sentences from a CSV file.
-        
-        :param csv_file: Path to the CSV file.
-        :return: List of sentences extracted from the CSV file.
-        """
-        pass
-
-    @abstractmethod
-    def postprocess_documents(self, documents: List[Document]) -> List[Document]:
-        """
-        Postprocess the extracted documents.
-
-        :param documents: List of documents to postprocess.
-        :return: List of postprocessed documents.
-        """
-        pass
-
-
-class FAQInputManager(InputManager):
+class FAQInputManager(BaseInputManager):
     def __init__(self):
         """
-        Initialize the FAQInputManager with a model manager.
-
-        :param model_manager: The model manager to be used for generating questions.
+        Initialize the FAQInputManager
         """
         self.model_manager = model_manager
 
-
     def postprocess_documents(self, documents: List[Document]) -> List[Document]:
         # LLM with structured output
-        structured_model = self.model_manager.llm_model.with_structured_output(schema={
-            "type": "object",
-            "properties": {
-                "questions": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "A list of questions."
-                }
-            },
-            "required": ["questions"]
-        })
+        structured_model = self.model_manager.llm_model.with_structured_output(
+            schema={
+                "type": "object",
+                "properties": {
+                    "questions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "A list of questions.",
+                    }
+                },
+                "required": ["questions"],
+            }
+        )
 
         all_documents_to_store = []
 
         for document in documents:
             # Keep original document
             all_documents_to_store.append(document)
+
+            # store original document metadata
+            antwort = document.metadata["Antwort"]
+            source = document.metadata["source"]
+            row = document.metadata["row"]
 
             # Generate possible questions
             response = structured_model.invoke(
@@ -70,19 +53,20 @@ class FAQInputManager(InputManager):
                 {document.page_content}
                 """
             )
-            for question in response['questions']:
+            for question in response["questions"]:
                 # Create a Document for each generated question
                 new_doc = Document(
-                    page_content="Frage: " + question + " Antwort: " + document.metadata["Antwort"],
-                    metadata={"source": document.metadata["source"], "row": document.metadata["row"]}
+                    page_content="Frage: " + question + " Antwort: " + antwort,
+                    metadata={"source": source, "row": row, "Antwort": antwort},
                 )
                 all_documents_to_store.append(new_doc)
+
         return all_documents_to_store
 
     def extract_sentences_from_csv(self, csv_file: str) -> List[Document]:
         """
         Extract sentences from a CSV file containing FAQs.
-        
+
         :param csv_file: Path to the CSV file.
         :return: List of sentences extracted from the CSV file.
         """
@@ -97,8 +81,13 @@ class FAQInputManager(InputManager):
         #              sentences.append(row[0] + " : " + row[1])  # Assuming the first column is the question and the second is the answer
         # return sentences
 
-        loader = CSVLoader(file_path=csv_file, csv_args={"delimiter": ";"},encoding="utf-8-sig",metadata_columns=["Antwort"], content_columns=["Frage","Antwort"])
+        loader = CSVLoader(
+            file_path=csv_file,
+            csv_args={"delimiter": ";"},
+            encoding="utf-8-sig",
+            metadata_columns=["Antwort"],
+            content_columns=["Frage", "Antwort"],
+        )
         data = loader.load()
 
         return data
-       

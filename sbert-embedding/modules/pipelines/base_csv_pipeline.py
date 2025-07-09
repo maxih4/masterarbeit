@@ -1,15 +1,15 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 import logging
 
-from module_instances import db_manager, model_manager
-from modules.InputManager import InputManager
+from module_instances import  model_manager
+from modules.input_managers.base_input_manager import BaseInputManager
 
 logger = logging.getLogger(__name__)
 class BaseCSVPipeline(ABC):
-    def __init__(self,input_manager,csv_path):
+    def __init__(self,input_manager,csv_path, db_manager):
         self.db_manager = db_manager
         self.model_manager = model_manager
-        self.input_manager: InputManager = input_manager
+        self.input_manager: BaseInputManager = input_manager
         self.csv_path:str= csv_path
 
     def run(self):
