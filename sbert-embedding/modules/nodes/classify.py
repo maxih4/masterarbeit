@@ -8,7 +8,7 @@ from modules.rag.state import State
 from modules.rag.utils import get_token_usage
 
 
-def classify(self, state: State):
+def classify(state: State):
     structured_model = model_manager.llm_model.with_structured_output(ResponseFormatter)
     messages = classify_prompt.invoke({"user_input": state["user_input"]})
     print(messages)
@@ -21,9 +21,7 @@ def classify(self, state: State):
 
 class ResponseFormatter(BaseModel):
     classifier: Literal[
-        "internal_faq",
-        "waste_disposal_guidance",
-        "irrelevant_or_smalltalk"
+        "internal_faq", "waste_disposal_guidance", "irrelevant_or_smalltalk"
     ] = Field(
         ...,
         description=(
@@ -32,5 +30,5 @@ class ResponseFormatter(BaseModel):
             "'internal_faq' (questions about orders, payments, or internal company processes), "
             "'waste_disposal_guidance' (questions about what goes into which container or how to dispose of something), "
             "'irrelevant_or_smalltalk' (chit-chat, jokes, or off-topic, nothing to do with a recycling company)."
-        )
+        ),
     )

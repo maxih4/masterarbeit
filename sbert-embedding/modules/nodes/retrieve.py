@@ -3,7 +3,7 @@ from module_instances import create_db_manager
 from modules.rag.state import State
 
 
-def retrieve(self, state: State):
+def retrieve(state: State):
     db_manager = create_db_manager(drop_old=False)
     retrieved_docs = db_manager.vector_store.similarity_search(
         state["question"], k=3, ranker_type="rrf", ranker_params={"k": 100}

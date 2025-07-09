@@ -4,6 +4,10 @@ from typing import Literal, Optional
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
+from modules.nodes.classify import classify
+from modules.nodes.form_query import form_query
+from modules.nodes.generate import generate
+from modules.nodes.retrieve import retrieve
 from modules.rag.state import State
 
 
@@ -19,15 +23,15 @@ class RagManager:
         if self._graph is None:
             try:
                 graph_builder = StateGraph(State)
-                graph_builder.add_node("_retrieve", self._retrieve)
-                graph_builder.add_node("_form_query", self._form_query)
-                graph_builder.add_node("_generate", self._generate)
-                graph_builder.add_node("_classify", self._classify)
-                # graph_builder.add_edge(START, "_form_query")
-                graph_builder.add_edge(START, "_classify")
-                graph_builder.add_edge("_classify", "_form_query")
-                graph_builder.add_edge("_form_query", "_retrieve")
-                graph_builder.add_edge("_retrieve", "_generate")
+                graph_builder.add_node("retrieve", retrieve)
+                graph_builder.add_node("form_query", form_query)
+                graph_builder.add_node("generate", generate)
+                graph_builder.add_node("classify", classify)
+                # graph_builder.add_edge(START, "form_query")
+                graph_builder.add_edge(START, "classify")
+                graph_builder.add_edge("classify", "form_query")
+                graph_builder.add_edge("form_query", "retrieve")
+                graph_builder.add_edge("retrieve", "generate")
                 connection_pool = await self._get_connection_pool()
                 if connection_pool:
                     checkpointer = AsyncPostgresSaver(connection_pool)  # type: ignore
