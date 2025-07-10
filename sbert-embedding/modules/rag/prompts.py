@@ -9,7 +9,8 @@ first_prompt = ChatPromptTemplate.from_messages(
             "Preserve exactly the meaning and scope of the original input — do not add or assume any information that is not explicitly present. "
             "Use the chat history only to resolve ambiguities, not to add unrelated topics. "
             "Output only the improved question, nothing else."
-            "Do not add any words that are not needed to form a question. ",
+            "Do not add any words that are not needed to form a question. "
+            "If the new input depends on the input before, rephrase the question that it can later be answered without knowing the history",
         ),
         (
             "human",

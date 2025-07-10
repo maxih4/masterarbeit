@@ -9,8 +9,7 @@ class State(TypedDict):
     user_input: str
     context: List[Document]
     answer: str
-    last_user_message: List[HumanMessage]
-    last_ai_message: List[AIMessage]
-    last_user_question: List[AIMessage]
+    last_ai_message: str
+    last_user_question: str
     classifier: str
     token_usage: Dict[str, Dict[str, int]]

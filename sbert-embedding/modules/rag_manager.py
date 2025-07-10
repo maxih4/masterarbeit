@@ -4,7 +4,8 @@ from typing import Literal, Optional
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
-from modules.nodes.classify import classify
+from modules.nodes.classify import classify, classify_path_function
+from modules.nodes.dont_know import dont_know
 from modules.nodes.form_query import form_query
 from modules.nodes.generate import generate
 from modules.nodes.retrieve import retrieve
@@ -27,9 +28,11 @@ class RagManager:
                 graph_builder.add_node("form_query", form_query)
                 graph_builder.add_node("generate", generate)
                 graph_builder.add_node("classify", classify)
-                # graph_builder.add_edge(START, "form_query")
+                graph_builder.add_node("dont_know", dont_know)
                 graph_builder.add_edge(START, "classify")
-                graph_builder.add_edge("classify", "form_query")
+                graph_builder.add_conditional_edges(
+                    "classify", path=classify_path_function
+                )
                 graph_builder.add_edge("form_query", "retrieve")
                 graph_builder.add_edge("retrieve", "generate")
                 connection_pool = await self._get_connection_pool()

@@ -32,3 +32,10 @@ class ResponseFormatter(BaseModel):
             "'irrelevant_or_smalltalk' (chit-chat, jokes, or off-topic, nothing to do with a recycling company)."
         ),
     )
+
+
+def classify_path_function(state: State):
+    if state["classifier"] == "irrelevant_or_smalltalk":
+        return "dont_know"
+    else:
+        return "form_query"
