@@ -34,7 +34,7 @@ class ResponseFormatter(BaseModel):
     )
 
 
-def classify_path_function(state: State):
+def classify_path_function(state: State) -> Literal["dont_know", "form_query"]:
     if state["classifier"] == "irrelevant_or_smalltalk":
         return "dont_know"
     else:
