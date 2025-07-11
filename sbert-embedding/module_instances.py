@@ -12,7 +12,8 @@ model_manager = ModelManager(
         temperature=0,
     ),
     embedding_model=HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-mpnet-base-v2"
+        model_name="Qwen/Qwen3-Embedding-8B",
+        model_kwargs={"trust_remote_code": True},
     ),
 )
 
@@ -27,6 +28,7 @@ def create_db_manager(drop_old: bool = False) -> DatabaseManager:
             auto_id=True,
             drop_old=drop_old,
             enable_dynamic_field=True,
+            collection_name="async_test_collection",
         ),
         conn_pool=AsyncConnectionPool(
             conninfo="postgresql://postgres:example@localhost:5432/postgres?sslmode=disable",
@@ -34,5 +36,3 @@ def create_db_manager(drop_old: bool = False) -> DatabaseManager:
             open=False,
         ),
     )
-
-

@@ -14,7 +14,11 @@ class FAQInputManager(BaseInputManager):
         """
         self.model_manager = model_manager
 
-    def postprocess_documents(self, documents: List[Document]) -> List[Document]:
+    async def postprocess_documents(self, documents: List[Document]) -> List[Document]:
+        """
+        Postprocess documents asynchronously by generating additional user questions
+        with the help of the LLM.
+        """
         # LLM with structured output
         structured_model = self.model_manager.llm_model.with_structured_output(
             schema={
@@ -41,8 +45,8 @@ class FAQInputManager(BaseInputManager):
             source = document.metadata["source"]
             row = document.metadata["row"]
 
-            # Generate possible questions
-            response = structured_model.invoke(
+            # Generate possible questions asynchronously
+            response = await structured_model.ainvoke(
                 f"""
                 Gegeben ist der folgende FAQ-Eintrag. Erzeuge eine Liste von **15 realistischen und unterschiedlichen Nutzerfragen**, die ein Kunde zu diesem Thema stellen könnte.  
                 Alle Fragen sollen semantisch zum FAQ-Eintrag passen, aber unterschiedliche Formulierungen, Synonyme oder Satzstellungen verwenden.  
@@ -53,34 +57,24 @@ class FAQInputManager(BaseInputManager):
                 {document.page_content}
                 """
             )
+
             for question in response["questions"]:
                 # Create a Document for each generated question
                 new_doc = Document(
-                    page_content="Frage: " + question + " Antwort: " + antwort,
+                    page_content=f"Frage: {question} Antwort: {antwort}",
                     metadata={"source": source, "row": row, "Antwort": antwort},
                 )
                 all_documents_to_store.append(new_doc)
 
         return all_documents_to_store
 
-    def extract_sentences_from_csv(self, csv_file: str) -> List[Document]:
+    async def extract_sentences_from_csv(self, csv_file: str) -> List[Document]:
         """
-        Extract sentences from a CSV file containing FAQs.
+        Extract sentences from a CSV file containing FAQs asynchronously.
 
         :param csv_file: Path to the CSV file.
         :return: List of sentences extracted from the CSV file.
         """
-        # import csv
-
-        # sentences = []
-        # with open(csv_file, newline='', encoding='utf-8') as file:
-        #     reader = csv.reader(file, delimiter=';')
-        #     next(reader, None)  # Skip the header row
-        #     for row in reader:
-        #         if row:  # Make sure the row is not empty
-        #              sentences.append(row[0] + " : " + row[1])  # Assuming the first column is the question and the second is the answer
-        # return sentences
-
         loader = CSVLoader(
             file_path=csv_file,
             csv_args={"delimiter": ";"},
@@ -88,6 +82,5 @@ class FAQInputManager(BaseInputManager):
             metadata_columns=["Antwort"],
             content_columns=["Frage", "Antwort"],
         )
-        data = loader.load()
-
+        data = await loader.aload()
         return data

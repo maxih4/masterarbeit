@@ -9,11 +9,15 @@ from modules.input_managers.base_input_manager import BaseInputManager
 class FractionInputManager(BaseInputManager):
     def __init__(self):
         """
-        Initialize the FAQInputManager with a model manager.
+        Initialize the FractionInputManager with a model manager.
         """
         self.model_manager = model_manager
 
-    def postprocess_documents(self, documents: List[Document]) -> List[Document]:
+    async def postprocess_documents(self, documents: List[Document]) -> List[Document]:
+        """
+        Postprocess documents asynchronously by creating
+        a normalized description of each fraction.
+        """
         all_documents_to_store = []
 
         for document in documents:
@@ -33,14 +37,13 @@ class FractionInputManager(BaseInputManager):
 
         return all_documents_to_store
 
-    def extract_sentences_from_csv(self, csv_file: str) -> List[Document]:
+    async def extract_sentences_from_csv(self, csv_file: str) -> List[Document]:
         """
-        Extract sentences from a CSV file containing FAQs.
+        Extract sentences from a CSV file containing fraction rules asynchronously.
 
         :param csv_file: Path to the CSV file.
         :return: List of sentences extracted from the CSV file.
         """
-
         loader = CSVLoader(
             file_path=csv_file,
             csv_args={"delimiter": ";"},
@@ -48,6 +51,5 @@ class FractionInputManager(BaseInputManager):
             metadata_columns=["Fraktion", "Was darf rein", "Was darf NICHT rein"],
             content_columns=[],
         )
-        data = loader.load()
-
+        data = await loader.aload()
         return data
