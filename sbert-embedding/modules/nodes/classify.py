@@ -7,6 +7,8 @@ from modules.rag.prompts import classify_prompt
 from modules.rag.state import State
 from modules.rag.utils import get_token_usage
 
+# TODO: Add one more classification for complex inquiries e.g. orders, or complaints
+
 
 def classify(state: State):
     structured_model = model_manager.llm_model.with_structured_output(ResponseFormatter)

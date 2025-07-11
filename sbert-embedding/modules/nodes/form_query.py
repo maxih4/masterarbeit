@@ -1,4 +1,7 @@
 # Form query to one question
+
+
+### TODO: if needed make multiple questions out of the user query
 import logging
 from module_instances import model_manager
 from modules.rag.prompts import first_prompt
