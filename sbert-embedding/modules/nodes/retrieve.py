@@ -3,9 +3,9 @@ from module_instances import create_db_manager
 from modules.rag.state import State
 
 
-def retrieve(state: State):
+async def retrieve(state: State):
     db_manager = create_db_manager(drop_old=False)
-    retrieved_docs = db_manager.vector_store.similarity_search(
+    retrieved_docs = await db_manager.vector_store.asimilarity_search(
         state["question"],
         k=3,
         ranker_type="rrf",
@@ -13,7 +13,7 @@ def retrieve(state: State):
         expr=_get_expression(state),
     )
 
-    retrieved_docs_weighted = db_manager.vector_store.similarity_search(
+    retrieved_docs_weighted = await db_manager.vector_store.asimilarity_search(
         state["question"],
         k=3,
         ranker_type="weighted",

@@ -29,9 +29,6 @@ async def main():
     # Then, await all coroutines concurrently with asyncio.gather
     await asyncio.gather(*coroutines)
 
-    for pipeline in pipelines:
-        logger.info(f"Pipeline {pipeline.__class__.__name__} completed successfully.")
-
     logger.info("Finished.")
 
 

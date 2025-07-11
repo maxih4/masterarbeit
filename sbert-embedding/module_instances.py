@@ -8,7 +8,7 @@ from psycopg_pool import AsyncConnectionPool
 
 model_manager = ModelManager(
     llm_model=ChatOllama(
-        model="qwen2.5:7b",
+        model="qwen2.5:14b",
         temperature=0,
     ),
     embedding_model=HuggingFaceEmbeddings(
