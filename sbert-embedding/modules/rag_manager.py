@@ -5,6 +5,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from modules.nodes.classify import classify, classify_path_function
+from modules.nodes.contact_customer_support import contact_customer_support
 from modules.nodes.dont_know import dont_know
 from modules.nodes.form_query import form_query
 from modules.nodes.generate import generate
@@ -29,6 +30,9 @@ class RagManager:
                 graph_builder.add_node("generate", generate)
                 graph_builder.add_node("classify", classify)
                 graph_builder.add_node("dont_know", dont_know)
+                graph_builder.add_node(
+                    "contact_customer_support", contact_customer_support
+                )
                 graph_builder.add_edge(START, "classify")
                 graph_builder.add_conditional_edges(
                     "classify", path=classify_path_function

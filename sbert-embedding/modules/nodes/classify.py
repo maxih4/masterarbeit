@@ -23,21 +23,30 @@ def classify(state: State):
 
 class ResponseFormatter(BaseModel):
     classifier: Literal[
-        "internal_faq", "waste_disposal_guidance", "irrelevant_or_smalltalk"
+        "internal_faq",
+        "waste_disposal_guidance",
+        "irrelevant_or_smalltalk",
+        "complex_query_customer_support",
     ] = Field(
         ...,
         description=(
             "The classifier category for the user input. "
             "One of: "
-            "'internal_faq' (questions about orders, payments, or internal company processes), "
-            "'waste_disposal_guidance' (questions about what goes into which container or how to dispose of something), "
-            "'irrelevant_or_smalltalk' (chit-chat, jokes, or off-topic, nothing to do with a recycling company)."
+            "'internal_faq' — general information about the company, internal processes, payments, invoices, contact details, etc. "
+            "'waste_disposal_guidance' — how to dispose of specific materials, what goes into which bin/container, recycling instructions, etc. "
+            "'irrelevant_or_smalltalk' — off-topic questions, chit-chat, jokes, greetings, or anything unrelated to the recycling company. "
+            "'complex_query_customer_support' — specific or complex questions about individual orders, deliveries, complaints, or service issues "
+            "(e.g., 'When will my container be delivered?', 'Why wasn’t my container emptied?', 'My delivery is late', 'I want to file a complaint')."
         ),
     )
 
 
-def classify_path_function(state: State) -> Literal["dont_know", "form_query"]:
+def classify_path_function(
+    state: State,
+) -> Literal["dont_know", "form_query", "contact_customer_support"]:
     if state["classifier"] == "irrelevant_or_smalltalk":
         return "dont_know"
+    if state["classifier"] == "complex_query_customer_support":
+        return "contact_customer_support"
     else:
         return "form_query"
