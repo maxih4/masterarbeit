@@ -1,24 +1,24 @@
 from langchain_core.prompts import ChatPromptTemplate
 
-first_prompt = ChatPromptTemplate.from_messages(
+form_query_prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
             "You are an expert assistant for a recycling company's question-answering system. "
-            "Your task is to rephrase the user's input into a clear, semantically meaningful, and complete question. "
-            "Preserve exactly the meaning and scope of the original input — do not add or assume any information that is not explicitly present. "
-            "Use the chat history only to resolve ambiguities, not to add unrelated topics. "
-            "Output only the improved question, nothing else."
-            "Do not add any words that are not needed to form a question. "
-            "If the new input depends on the input before, rephrase the question that it can later be answered without knowing the history",
+            "Your task is to extract and rephrase multiple user questions from a single input. "
+            "Each rephrased question must be clear, complete, and semantically meaningful on its own. "
+            "Preserve the exact intent and meaning of the original input without adding any assumptions. "
+            "For each distinct item or topic in the input, formulate a separate question. "
+            "Use the chat history only if necessary to resolve references or ambiguities. "
+            "Output the result as a numbered list of individual questions. "
+            "Do not include any other text than the questions.",
         ),
         (
             "human",
-            "User Input: {user_input}\n\n" "Chat History (optional): {chat_history}",
+            "User Input: {user_input}\n\nChat History (optional): {chat_history}",
         ),
     ]
 )
-
 second_prompt = ChatPromptTemplate(
     [
         (

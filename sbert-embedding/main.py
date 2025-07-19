@@ -1,4 +1,3 @@
-
 #
 # @app.get("/search")
 # async def search(sentence: str):
@@ -16,6 +15,7 @@
 
 
 import logging
+from numbers import Number
 
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
@@ -39,18 +39,18 @@ ragManager = RagManager()
 
 
 @app.get("/search")
-async def search(sentence: str):
+async def search(sentence: str, thread_id: int):
     logger.info(f"Received search request: {sentence}")
-    config = RunnableConfig(
-        configurable={"thread_id": "1"}
-    )
+    config = RunnableConfig(configurable={"thread_id": thread_id})
     graph = await ragManager.create_graph()
     if graph is None:
         logger.error("Graph is not initialized")
         raise Exception("Graph is not initialized")
 
     async def event_stream():
-        async for update in graph.astream({"user_input": sentence,"token_usage":{}}, config, stream_mode="updates"):
+        async for update in graph.astream(
+            {"user_input": sentence, "token_usage": {}}, config, stream_mode="updates"
+        ):
             logger.debug(f"Streaming update: {update}")
             yield f"data: {update}\n\n"
 
@@ -66,7 +66,7 @@ def main():
         "main:app",  # <--- import path: file name (main.py) : app
         host="0.0.0.0",
         port=8000,
-        reload=True  # optional: only for dev
+        reload=True,  # optional: only for dev
     )
 
 
