@@ -3,21 +3,70 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from module_instances import model_manager
-from modules.rag.prompts import classify_prompt
+from modules.rag.prompts import prompt_template
 from modules.rag.state import State
 from modules.rag.utils import get_token_usage
-
-# TODO: Add one more classification for complex inquiries e.g. orders, or complaints
 
 
 def classify(state: State):
     structured_model = model_manager.llm_model.with_structured_output(ResponseFormatter)
-    messages = classify_prompt.invoke({"user_input": state["user_input"]})
-    print(messages)
+
+    instructions = (
+        "You are an intent-classifier for a question-answering system."
+        "Your job is to classify the user input into exactly one of these four categories:"
+        "- 'internal_faq':"
+        "The user asks for general information about the company, internal processes, payments, invoices, contact details, or FAQ topics."
+        "- 'waste_disposal_guidance':"
+        "The user asks for general information about how to correctly dispose of a material, what goes into which bin/container, or what type of container is appropriate for specific waste."
+        "- 'irrelevant_or_smalltalk':"
+        "Off-topic questions, chit-chat, jokes, greetings, or anything unrelated to the recycling company."
+        "- 'complex_query_customer_support':"
+        "The user requests a specific service action or has a complaint."
+        "Only choose one of these four categories. Do not explain your choice."
+        "Always focus on the *intent of the user*:"
+        "- If the user only asks for information or advice (e.g., how-to, what type), choose `waste_disposal_guidance`."
+        "- If the user asks for an action to be performed (e.g., pickup, delivery, order, complaint), choose `complex_query_customer_support`."
+    )
+
+    positive_examples = (
+        "Wie entsorge ich eine alte Matratze? Classification: waste_disposal_guidance"
+        "Kann ich per Rechnung bezahlen? Classification: internal_faq"
+        "Hallo, wie geht es dir? Classification: irrelevant_or_smalltalk"
+        "Können Sie die Papiertonne in der Straße 123 abholen? Die ABholung ist heute irgendwie ausgefallen. Classification: complex_query_customer_support"
+    )
+
+    negative_examples = (
+        # Wrong category: customer support issue misclassified as FAQ
+        "Meine Container wurden nicht geleert. Classification: internal_faq -> Falsch. Das ist keine allgemeine Frage, sondern ein konkretes Anliegen. "
+        "Korrekte Classification: complex_query_customer_support",
+        # Unclassified input
+        "Darf Bauschutt in den Sperrmüll Container? -> Es fehlt die Classification. Korrekte Classification: waste_disposal_guidance",
+        # Wrong category: joke misclassified as disposal question
+        "Was passiert, wenn ich meinen Ex in die Tonne werfe? Classification: waste_disposal_guidance -> Falsch. Off-topic, scherzhaft. "
+        "Korrekte Classification: irrelevant_or_smalltalk",
+        # Wrong category: payment method misclassified as disposal
+        "Wie kann ich bezahlen? Classification: waste_disposal_guidance -> Falsch. Geht um Zahlungsmodalitäten. "
+        "Korrekte Classification: internal_faq",
+        # Wrong category: small talk misclassified as support
+        "Na, alles klar bei dir? Classification: complex_query_customer_support -> Falsch. Das ist Smalltalk. "
+        "Korrekte Classification: irrelevant_or_smalltalk",
+        # Wrong category: vague complaint misclassified as waste guidance
+        "Warum ist mein Müll heute noch nicht abgeholt? Classification: waste_disposal_guidance -> Falsch. Es geht um ein konkretes Problem. "
+        "Korrekte Classification: complex_query_customer_support",
+    )
+
+    human_input_with_additional_information = f"User input: {state["user_input"]}"
+
+    messages = prompt_template.invoke(
+        {
+            "instructions": instructions,
+            "positive_examples": positive_examples,
+            "negative_examples": negative_examples,
+            "human_input_with_additional_information": human_input_with_additional_information,
+        }
+    )
     answer = structured_model.invoke(messages)
-    print(answer)
     tokens = get_token_usage("classify", messages.to_string(), answer.classifier, state)
-    print(tokens)
     return {"classifier": answer.classifier, **tokens}
 
 
