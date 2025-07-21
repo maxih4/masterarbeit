@@ -47,7 +47,7 @@ async def retrieve(state: RetrieveState):
     return {"qa_pairs": {"q": question, "ctx": result}}
 
 
-async def _get_expression(state: RetrieveState):
+def _get_expression(state: RetrieveState):
     if state["classifier"] == "internal_faq":
         return 'source == "csv/faq.csv"'
     if state["classifier"] == "waste_disposal_guidance":
