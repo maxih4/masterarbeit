@@ -2,10 +2,10 @@
 import asyncio
 
 from module_instances import create_db_manager
-from modules.rag.state import State
+from modules.rag.state import RetrieveState
 
 
-async def retrieve(state: State):
+async def retrieve(state: RetrieveState):
 
     # retrieved_docs = await db_manager.vector_store.asimilarity_search(
     #     state["questions"][0],
@@ -32,43 +32,24 @@ async def retrieve(state: State):
 
     db_manager = create_db_manager(drop_old=False)
 
-    questions = state["questions"]
+    question = state["question"]
     # for each qeustion form an asimilarity-search
 
-    tasks = [retrieve_documents_for_question(question, state) for question in questions]
-    # await all and pass to llm
-    all_results = await asyncio.gather(*tasks)
-
-    # flatten
-    flat_docs = [doc for sublist in all_results for doc in sublist]
-
-    # deduplicate by metadata key
-    seen = set()
-    unique_docs = []
-
-    for doc in flat_docs:
-        key = doc.metadata.get("pk")
-        if key not in seen:
-            seen.add(key)
-            unique_docs.append(doc)
-
-    return {"context": unique_docs}
-
-
-def _get_expression(state: State):
-    if state["classifier"] == "internal_faq":
-        return 'source == "csv/faq.csv"'
-    if state["classifier"] == "waste_disposal_guidance":
-        return 'source == "csv/fraktionen.csv"'
-    return None
-
-
-async def retrieve_documents_for_question(question: str, state: State):
-    db_manager = create_db_manager(drop_old=False)
-    return await db_manager.vector_store.asimilarity_search(
+    print(state)
+    result = await db_manager.vector_store.asimilarity_search(
         question,
         k=3,
         ranker_type="rrf",  # or "weighted"
         ranker_params={"k": 100},  # or {"weights": [0.9, 0.1]} if using "weighted"
         expr=_get_expression(state),
     )
+
+    return {"qa_pairs": {"q": question, "ctx": result}}
+
+
+async def _get_expression(state: RetrieveState):
+    if state["classifier"] == "internal_faq":
+        return 'source == "csv/faq.csv"'
+    if state["classifier"] == "waste_disposal_guidance":
+        return 'source == "csv/fraktionen.csv"'
+    return None

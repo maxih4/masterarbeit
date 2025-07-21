@@ -37,7 +37,6 @@ class RagManager:
                 graph_builder.add_conditional_edges(
                     "classify", path=classify_path_function
                 )
-                graph_builder.add_edge("form_query", "retrieve")
                 graph_builder.add_edge("retrieve", "generate")
                 connection_pool = await self._get_connection_pool()
                 if connection_pool:

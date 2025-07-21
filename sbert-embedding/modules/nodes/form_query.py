@@ -2,19 +2,21 @@
 
 
 import logging
-from typing import List
+from typing import List, Literal
 
+from langgraph.types import Send, Command
 from pydantic import BaseModel, Field
 
 from module_instances import model_manager
+from modules.nodes.retrieve import retrieve
 from modules.rag.prompts import prompt_template
-from modules.rag.state import State
+from modules.rag.state import State, RetrieveState
 from modules.rag.utils import get_token_usage
 
 logger = logging.getLogger(__name__)
 
 
-def form_query(state: State):
+def form_query(state: State) -> Command[Literal["retrieve"]]:
     # Get all questions from last time
     last_questions = state.get("questions", [])
 
@@ -38,7 +40,7 @@ def form_query(state: State):
     positive_examples = (
         "Wohin gehört Metall entsorgt?",
         "Dürfen Dachziegel in den Sperrmüll?",
-        "Darf in den SPerrmüll Container auch ein Fahrrad?"
+        "Darf in den Sperrmüll Container auch ein Fahrrad?"
         "Kann ich mit Paypal bezahlen?"
         "Wird ein Wunschtermin eingehalten?",
         "Wie lange im Vorraus muss ich einen Container bestellen?",
@@ -77,8 +79,20 @@ def form_query(state: State):
     )
 
     logger.info(f"Generated Questions: {questions}")
+    sends = [
+        Send(
+            "retrieve",
+            RetrieveState(question=q, classifier=state["classifier"]),
+        )
+        for q in questions
+    ]
 
-    return {"questions": questions, **tokens}
+    # `update` is the normal state‑update dict,
+    # `sends` is the fan‑out payload.
+    return Command(
+        update={"questions": questions, **tokens},
+        goto=sends,
+    )
 
 
 class ResponseFormatter(BaseModel):
