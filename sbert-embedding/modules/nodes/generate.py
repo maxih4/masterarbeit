@@ -8,7 +8,7 @@ async def generate(state: State):
 
     #  Wenn eine frage, dann direkt generieren
     if len(state["qa_pairs"]) == 1:
-        return generate_answer(qa=state["qa_pairs"][0], state=state)
+        return await generate_answer(qa=state["qa_pairs"][0], state=state)
 
     else:
         print("multiple questions")
