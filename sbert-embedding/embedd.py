@@ -1,4 +1,7 @@
 import asyncio
+
+from dotenv import load_dotenv
+
 from module_instances import create_db_manager
 from modules.input_managers.faq_input_manager import FAQInputManager
 from modules.input_managers.fraction_input_manager import FractionInputManager
@@ -8,6 +11,7 @@ import logging
 
 configure_logging()
 logger = logging.getLogger(__name__)
+load_dotenv()
 
 
 async def main():

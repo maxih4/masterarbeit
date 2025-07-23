@@ -1,11 +1,12 @@
 # Define steps
 import asyncio
+from typing import Dict, List
 
 from module_instances import create_db_manager
-from modules.rag.state import RetrieveState
+from modules.rag.state import RetrieveState, QA
 
 
-async def retrieve(state: RetrieveState):
+async def retrieve(state: RetrieveState)->Dict[str, List[QA]]:
 
     # retrieved_docs = await db_manager.vector_store.asimilarity_search(
     #     state["questions"][0],
@@ -44,7 +45,7 @@ async def retrieve(state: RetrieveState):
         expr=_get_expression(state),
     )
 
-    return {"qa_pairs": {"q": question, "ctx": result}}
+    return {"qa_pairs": [{"q": question, "ctx": result}]}
 
 
 def _get_expression(state: RetrieveState):

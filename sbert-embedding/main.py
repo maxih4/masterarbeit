@@ -15,8 +15,8 @@
 
 
 import logging
-from numbers import Number
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 import uvicorn
@@ -31,6 +31,7 @@ from utils.logging_config import configure_logging
 # ---------------------------------------------------
 configure_logging()
 logger = logging.getLogger(__name__)
+
 # ---------------------------------------------------
 # FastAPI setup
 # ---------------------------------------------------

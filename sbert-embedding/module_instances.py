@@ -1,19 +1,31 @@
+import os
+
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+
 from modules.database_manager import DatabaseManager
 from modules.model_manager import ModelManager
-from langchain_ollama import ChatOllama
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_milvus import Milvus, BM25BuiltInFunction
 from psycopg_pool import AsyncConnectionPool
 
 
+load_dotenv()
+
+
 model_manager = ModelManager(
-    llm_model=ChatOllama(
+    llm_model=ChatOpenAI(
         model="qwen2.5:14b",
         temperature=0,
+        api_key=os.environ.get("OPENAI_API_KEY"),
+        base_url=os.environ.get("OPENAI_API_URL"),
     ),
+    # embedding_model=HuggingFaceEmbeddings(
+    #     model_name="Qwen/Qwen3-Embedding-8B",
+    #     model_kwargs={"trust_remote_code": True},
+    # ),
     embedding_model=HuggingFaceEmbeddings(
-        model_name="Qwen/Qwen3-Embedding-8B",
-        model_kwargs={"trust_remote_code": True},
+        model_name="sentence-transformers/all-MiniLM-L6-v2",
     ),
 )
 
@@ -28,7 +40,7 @@ def create_db_manager(drop_old: bool = False) -> DatabaseManager:
             auto_id=True,
             drop_old=drop_old,
             enable_dynamic_field=True,
-            collection_name="async_test_collection",
+            collection_name="simple_model",
         ),
         conn_pool=AsyncConnectionPool(
             conninfo="postgresql://postgres:example@localhost:5432/postgres?sslmode=disable",

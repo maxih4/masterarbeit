@@ -47,9 +47,10 @@ def form_query(state: State) -> Command[Literal["retrieve"]]:
     )
 
     negative_examples = (
-        "1. Können Holz, Bauschutt und Fliesen in den gleichen Container entsorgt werden? -> Mehrere Dinge zusammengeführt zu einer Frage",
+        "1. Können Holz, Bauschutt und Fliesen in den gleichen Container entsorgt werden? -> Mehrere Dinge zusammengeführt zu einer Frage. Nur eine Entitität pro Frage",
         "2. Was gehört da rein? -> Nicht spezifisch genug, fehlende Entititäten",
-        "3. Gehört Glas in den Sperrmüll? Kann ich Glas in den Sperrmüll COntainer werfen? -> Mehrfach die Gleiche Frage",
+        "3. Gehört Glas in den Sperrmüll? Kann ich Glas in den Sperrmüll Container werfen? -> Mehrfach die Gleiche Frage. Nur eine Frage zum gleichen Thema",
+        "4. 'Können Metall und Glas im Sperrmüll abgelegt werden? -> Mehrere Abfallfragen kombiniert. FALSCH!  ",
     )
     human_input_with_additional_information = (
         f"User Input: {state["user_input"]}",
