@@ -49,11 +49,15 @@ async def search(sentence: str, thread_id: int):
         raise Exception("Graph is not initialized")
 
     async def event_stream():
-        async for update in graph.astream(
-            {"user_input": sentence, "token_usage": {}}, config, stream_mode="updates"
+        async for values in graph.astream(
+            {
+                "user_input": sentence,
+            },
+            config,
+            stream_mode="values",
         ):
-            logger.debug(f"Streaming update: {update}")
-            yield f"data: {update}\n\n"
+            logger.debug(f"Streaming state: {values}")
+            yield f"data: {values}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 

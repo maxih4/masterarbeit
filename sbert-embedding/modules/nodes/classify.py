@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from module_instances import model_manager
 from modules.rag.prompts import prompt_template
 from modules.rag.state import State
-from modules.rag.utils import get_token_usage
+from modules.rag.utils import invoke_model_and_receive_token_usage
 
 
 def classify(state: State):
@@ -65,9 +65,16 @@ def classify(state: State):
             "human_input_with_additional_information": human_input_with_additional_information,
         }
     )
-    answer = structured_model.invoke(messages)
-    tokens = get_token_usage("classify", messages.to_string(), answer.classifier, state)
-    return {"classifier": answer.classifier, **tokens}
+
+    answer, token_usage = invoke_model_and_receive_token_usage(
+        structured_model, messages, "classify"
+    )
+    return {
+        "classifier": answer.classifier,
+        "token_usage": [token_usage],
+        "input_tokens": token_usage["input_tokens"],
+        "output_tokens": token_usage["output_tokens"],
+    }
 
 
 class ResponseFormatter(BaseModel):
