@@ -15,7 +15,7 @@ load_dotenv()
 
 model_manager = ModelManager(
     llm_model=ChatOpenAI(
-        model="qwen2.5:14b",
+        model=os.environ.get("OPENAI_MODEL_NAME"),
         temperature=0,
         api_key=os.environ.get("OPENAI_API_KEY"),
         base_url=os.environ.get("OPENAI_API_URL"),

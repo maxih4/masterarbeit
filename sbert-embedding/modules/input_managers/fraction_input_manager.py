@@ -25,13 +25,24 @@ class FractionInputManager(BaseInputManager):
             fraktion = document.metadata.get("Fraktion", "Unbekannt")
             allowed = document.metadata.get("Was darf rein", "")
             not_allowed = document.metadata.get("Was darf NICHT rein", "")
-
+            source = document.metadata["source"]
+            row = document.metadata["row"]
             page_content = (
                 f"Die Fraktion {fraktion} darf folgendes enthalten: {allowed}. "
                 f"Die Fraktion {fraktion} darf folgendes nicht enthalten: {not_allowed}."
             )
 
-            new_doc = Document(page_content=page_content, metadata=document.metadata)
+            new_doc = Document(
+                page_content=f"Die Fraktion {fraktion} darf folgendes enthalten: {allowed}. "
+                f"Die Fraktion {fraktion} darf folgendes nicht enthalten: {not_allowed}.",
+                metadata={
+                    "source": source,
+                    "row": row,
+                    "Fraktion": fraktion,
+                    "Was darf rein": allowed,
+                    "Was darf NICHT rein": not_allowed,
+                },
+            )
 
             all_documents_to_store.append(new_doc)
 
