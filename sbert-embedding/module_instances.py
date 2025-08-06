@@ -1,17 +1,18 @@
 import os
 
 from dotenv import load_dotenv
+from langchain_experimental.data_anonymizer import PresidioAnonymizer
 from langchain_openai import ChatOpenAI
+from presidio_anonymizer import OperatorConfig
 
+from modules.anonymizer_manager import AnonymizerManager
 from modules.database_manager import DatabaseManager
 from modules.model_manager import ModelManager
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_milvus import Milvus, BM25BuiltInFunction
 from psycopg_pool import AsyncConnectionPool
 
-
 load_dotenv()
-
 
 model_manager = ModelManager(
     llm_model=ChatOpenAI(
@@ -48,3 +49,27 @@ def create_db_manager(drop_old: bool = False) -> DatabaseManager:
             open=False,
         ),
     )
+
+
+anonymizer_manager = AnonymizerManager(
+    anonymizer=PresidioAnonymizer(
+        analyzed_fields=["PHONE_NUMBER", "LOCATION"],
+        languages_config={
+            "nlp_engine_name": "spacy",
+            "models": [
+                {"lang_code": "de", "model_name": "de_core_news_lg"},
+            ],
+        },
+        operators={
+            "PHONE_NUMBER": OperatorConfig(
+                "mask",
+                {
+                    "type": "mask",
+                    "masking_char": "*",
+                    "chars_to_mask": 12,
+                    "from_end": True,
+                },
+            ),
+        },
+    )
+)
