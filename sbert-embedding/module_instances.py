@@ -53,7 +53,7 @@ def create_db_manager(drop_old: bool = False) -> DatabaseManager:
 
 anonymizer_manager = AnonymizerManager(
     anonymizer=PresidioAnonymizer(
-        analyzed_fields=["PHONE_NUMBER", "LOCATION"],
+        analyzed_fields=["PHONE_NUMBER", "LOCATION", "EMAIL_ADDRESS", "PERSON"],
         languages_config={
             "nlp_engine_name": "spacy",
             "models": [
@@ -70,6 +70,9 @@ anonymizer_manager = AnonymizerManager(
                     "from_end": True,
                 },
             ),
+            "LOCATION": OperatorConfig("mask"),
+            "EMAIL_ADDRESS": OperatorConfig("mask"),
+            "PERSON": OperatorConfig("mask"),
         },
     )
 )
