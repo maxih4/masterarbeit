@@ -6,7 +6,7 @@ from module_instances import create_db_manager
 from modules.rag.state import RetrieveState, QA
 
 
-async def retrieve(state: RetrieveState)->Dict[str, List[QA]]:
+async def retrieve(state: RetrieveState) -> Dict[str, List[QA]]:
 
     # retrieved_docs = await db_manager.vector_store.asimilarity_search(
     #     state["questions"][0],
@@ -39,9 +39,9 @@ async def retrieve(state: RetrieveState)->Dict[str, List[QA]]:
     print(state)
     result = await db_manager.vector_store.asimilarity_search(
         question,
-        k=3,
-        ranker_type="rrf",  # or "weighted"
-        ranker_params={"k": 100},  # or {"weights": [0.9, 0.1]} if using "weighted"
+        k=4,
+        ranker_type="rrf",
+        ranker_params={"k": 60},
         expr=_get_expression(state),
     )
 
