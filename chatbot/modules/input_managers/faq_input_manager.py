@@ -2,9 +2,14 @@ from typing import List
 
 from langchain_community.document_loaders import CSVLoader
 from langchain_core.documents import Document
+from pydantic import BaseModel, Field
 
 from module_instances import model_manager
 from modules.input_managers.base_input_manager import BaseInputManager
+
+
+class QuestionsSchema(BaseModel):
+    questions: List[str] = Field(description="A list of questions.")
 
 
 class FAQInputManager(BaseInputManager):
@@ -21,17 +26,7 @@ class FAQInputManager(BaseInputManager):
         """
         # LLM with structured output
         structured_model = self.model_manager.llm_model.with_structured_output(
-            schema={
-                "type": "object",
-                "properties": {
-                    "questions": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "A list of questions.",
-                    }
-                },
-                "required": ["questions"],
-            }
+            schema=QuestionsSchema
         )
 
         all_documents_to_store = []
@@ -58,8 +53,7 @@ class FAQInputManager(BaseInputManager):
                 """
             )
 
-            for question in response["questions"]:
-                # Create a Document for each generated question
+            for question in response.questions:
                 new_doc = Document(
                     page_content=f"Frage: {question} Antwort: {antwort}",
                     metadata={"source": source, "row": row, "Antwort": antwort},
