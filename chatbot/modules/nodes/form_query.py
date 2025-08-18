@@ -86,6 +86,8 @@ def form_query(state: State) -> Command[Literal["retrieve"]]:
         for q in questions
     ]
 
+    logger.info(f"Sends: {sends}")
+
     # `update` is the normal state‑update dict,
     # `sends` is the fan‑out payload.
     return Command(
@@ -94,6 +96,7 @@ def form_query(state: State) -> Command[Literal["retrieve"]]:
             "token_usage": [token_usage],
             "input_tokens": token_usage["input_tokens"],
             "output_tokens": token_usage["output_tokens"],
+            "qa_pairs": [],
         },
         goto=sends,
     )

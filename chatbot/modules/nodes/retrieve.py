@@ -1,9 +1,12 @@
 # Define steps
 import asyncio
+import logging
 from typing import Dict, List
 
 from module_instances import create_db_manager
 from modules.rag.state import RetrieveState, QA
+
+logger = logging.getLogger(__name__)
 
 
 async def retrieve(state: RetrieveState) -> Dict[str, List[QA]]:
@@ -36,7 +39,7 @@ async def retrieve(state: RetrieveState) -> Dict[str, List[QA]]:
     question = state["question"]
     # for each qeustion form an asimilarity-search
 
-    print(state)
+    logger.info(state)
     result = await db_manager.vector_store.asimilarity_search(
         question,
         k=4,
@@ -44,13 +47,13 @@ async def retrieve(state: RetrieveState) -> Dict[str, List[QA]]:
         ranker_params={"k": 60},
         expr=_get_expression(state),
     )
-
+    logger.info(result)
     return {"qa_pairs": [{"q": question, "ctx": result}]}
 
 
 def _get_expression(state: RetrieveState):
     if state["classifier"] == "internal_faq":
-        return 'source == "files/faq.files"'
+        return 'source == "csv/faq.csv"'
     if state["classifier"] == "waste_disposal_guidance":
-        return 'source == "files/fraktionen.files"'
+        return 'source == "csv/fraktionen.csv"'
     return None
