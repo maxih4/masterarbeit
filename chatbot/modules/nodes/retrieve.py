@@ -50,7 +50,7 @@ async def retrieve(state: RetrieveState) -> Dict[str, List[QA]]:
 
 def _get_expression(state: RetrieveState):
     if state["classifier"] == "internal_faq":
-        return 'source == "csv/faq.csv"'
+        return 'source == "files/faq.files"'
     if state["classifier"] == "waste_disposal_guidance":
-        return 'source == "csv/fraktionen.csv"'
+        return 'source == "files/fraktionen.files"'
     return None

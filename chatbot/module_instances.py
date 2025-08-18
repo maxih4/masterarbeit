@@ -61,18 +61,9 @@ anonymizer_manager = AnonymizerManager(
             ],
         },
         operators={
-            "PHONE_NUMBER": OperatorConfig(
-                "mask",
-                {
-                    "type": "mask",
-                    "masking_char": "*",
-                    "chars_to_mask": 12,
-                    "from_end": True,
-                },
+            "DEFAULT": OperatorConfig(
+                "mask", {"masking_char": "*", "chars_to_mask": 0, "from_end": False}
             ),
-            "LOCATION": OperatorConfig("mask"),
-            "EMAIL_ADDRESS": OperatorConfig("mask"),
-            "PERSON": OperatorConfig("mask"),
         },
     )
 )
