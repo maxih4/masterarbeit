@@ -96,7 +96,6 @@ def form_query(state: State) -> Command[Literal["retrieve"]]:
             "token_usage": [token_usage],
             "input_tokens": token_usage["input_tokens"],
             "output_tokens": token_usage["output_tokens"],
-            "qa_pairs": [],
         },
         goto=sends,
     )
