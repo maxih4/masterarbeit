@@ -202,7 +202,6 @@ def main():
         response = request_and_response(connection, row)
         results.append((row, response))
         # remove break to process all
-        break
 
     if results:
         write_csv(results, filename="evaluation_results.csv")
