@@ -15,17 +15,18 @@ def classify(state: State):
         "You are an intent-classifier for a question-answering system."
         "Your job is to classify the user input into exactly one of these four categories:"
         "- 'internal_faq':"
-        "The user asks for general information about the company, internal processes, payments, invoices, contact details, or FAQ topics."
+        "The user asks for general information about the company, internal processes, payments, invoices, contact details, general questions regarding the process of ordering or FAQ topics."
         "- 'waste_disposal_guidance':"
         "The user asks for general information about how to correctly dispose of a material, what goes into which bin/container, or what type of container is appropriate for specific waste."
         "- 'irrelevant_or_smalltalk':"
         "Off-topic questions, chit-chat, jokes, greetings, or anything unrelated to the recycling company."
         "- 'complex_query_customer_support':"
-        "The user requests a specific service action or has a complaint."
+        "The user requests a specific service action, asks for a price of a container or has a complaint."
         "Only choose one of these four categories. Do not explain your choice."
         "Always focus on the *intent of the user*:"
-        "- If the user only asks for information or advice (e.g., how-to, what type), choose `waste_disposal_guidance`."
-        "- If the user asks for an action to be performed (e.g., pickup, delivery, order, complaint), choose `complex_query_customer_support`."
+        "- If the user only asks for information or advice (e.g., how-to, what type), choose `internal_faq`."
+        "- If the user asks for an action to be performed (e.g., pickup, delivery, order, complaint, price), choose `complex_query_customer_support`."
+        "- If the user asks where to put anything (e.g. in what container), choose `waste_disposal_guidance`."
     )
 
     positive_examples = (
