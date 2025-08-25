@@ -61,9 +61,10 @@ anonymizer_manager = AnonymizerManager(
             ],
         },
         operators={
-            "DEFAULT": OperatorConfig(
-                "mask", {"masking_char": "*", "chars_to_mask": 0, "from_end": False}
-            ),
+            "PHONE_NUMBER": OperatorConfig("replace", {"new_value": "<ANONYMIZED>"}),
+            "LOCATION": OperatorConfig("replace", {"new_value": "<ANONYMIZED>"}),
+            "EMAIL_ADDRESS": OperatorConfig("replace", {"new_value": "<ANONYMIZED>"}),
+            "PERSON": OperatorConfig("replace", {"new_value": "<ANONYMIZED>"}),
         },
     )
 )
