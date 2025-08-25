@@ -31,9 +31,13 @@ def classify(state: State):
 
     positive_examples = (
         "Wie entsorge ich eine alte Matratze? Classification: waste_disposal_guidance"
+        "Steinboden, Dachpappe, Regenrinnen. Wo entsorge ich das? Classification: waste_disposal_guidance"
         "Kann ich per Rechnung bezahlen? Classification: internal_faq"
+        "Kann ich den Container drehen? Classification: internal_faq"
         "Hallo, wie geht es dir? Classification: irrelevant_or_smalltalk"
+        "Wie spät ist es? Classification: irrelevant_or_smalltalk"
         "Können Sie die Papiertonne in der Straße 123 abholen? Die ABholung ist heute irgendwie ausgefallen. Classification: complex_query_customer_support"
+        "Machen Sie mir ein Angebot für Speisereste. Ich habe circa 5m³. Classification: complex_query_customer_support",
     )
 
     negative_examples = (
@@ -53,7 +57,10 @@ def classify(state: State):
         "Korrekte Classification: irrelevant_or_smalltalk",
         # Wrong category: vague complaint misclassified as waste guidance
         "Warum ist mein Müll heute noch nicht abgeholt? Classification: waste_disposal_guidance -> Falsch. Es geht um ein konkretes Problem. "
-        "Korrekte Classification: complex_query_customer_support",
+        "Korrekte Classification: complex_query_customer_support"
+        # Wrong category: multipel sentences misleading to complexity, but its a normal internal_faq
+        "Heute ist unser Container schon voll und ich möchte wissen,wann die Container entleert werden. Classification: complex_query_customer_support -> Falsch. Es ist eine konkrete Frage, die in der FAQ stehen könnte."
+        "Korrekte Classification: internal_faq",
     )
 
     human_input_with_additional_information = f"User input: {state["user_input"]}"
