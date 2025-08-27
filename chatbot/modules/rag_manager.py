@@ -1,3 +1,5 @@
+import os
+
 from langgraph.graph import START, StateGraph
 from psycopg_pool import AsyncConnectionPool
 from typing import Literal, Optional
@@ -39,9 +41,10 @@ class RagManager:
                 )
                 graph_builder.add_edge(START, "anonymize")
                 graph_builder.add_edge("anonymize", "classify")
-                graph_builder.add_conditional_edges(
-                    "classify", path=classify_path_function
-                )
+                if os.environ.get("ONLY_CLASSIFY") == "false":
+                    graph_builder.add_conditional_edges(
+                        "classify", path=classify_path_function
+                    )
                 graph_builder.add_edge("retrieve", "generate")
                 connection_pool = await self._get_connection_pool()
                 if connection_pool:
