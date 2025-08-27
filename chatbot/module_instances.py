@@ -15,11 +15,11 @@ from psycopg_pool import AsyncConnectionPool
 load_dotenv()
 
 model_manager = ModelManager(
-    llm_model=ChatOpenAI(
-        model=os.environ.get("OPENAI_MODEL_NAME"),
+    llm_model_classify=ChatOpenAI(
+        model=os.environ.get("OPENAI_MODEL_NAME_CLASSIFY"),
         temperature=0,
-        api_key=os.environ.get("OPENAI_API_KEY"),
-        base_url=os.environ.get("OPENAI_API_URL"),
+        api_key=os.environ.get("OPENAI_API_KEY_CLASSIFY"),
+        base_url=os.environ.get("OPENAI_API_URL_CLASSIFY"),
     ),
     # embedding_model=HuggingFaceEmbeddings(
     #     model_name="Qwen/Qwen3-Embedding-8B",
@@ -27,6 +27,12 @@ model_manager = ModelManager(
     # ),
     embedding_model=HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
+    ),
+    llm_model=ChatOpenAI(
+        model=os.environ.get("OPENAI_MODEL_NAME"),
+        temperature=0,
+        api_key=os.environ.get("OPENAI_API_KEY"),
+        base_url=os.environ.get("OPENAI_API_URL"),
     ),
 )
 

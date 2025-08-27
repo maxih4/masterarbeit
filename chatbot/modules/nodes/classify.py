@@ -9,7 +9,9 @@ from modules.rag.utils import invoke_model_and_receive_token_usage
 
 
 def classify(state: State):
-    structured_model = model_manager.llm_model.with_structured_output(ResponseFormatter)
+    structured_model = model_manager.llm_model_classify.with_structured_output(
+        ResponseFormatter
+    )
 
     instructions = (
         "You are an intent-classifier for a question-answering system."
