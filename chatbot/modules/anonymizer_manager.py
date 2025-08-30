@@ -1,8 +1,8 @@
-from langchain_experimental.data_anonymizer.base import AnonymizerBase
+from langchain_experimental.data_anonymizer import PresidioAnonymizer
 
 
 class AnonymizerManager:
-    def __init__(self, anonymizer: AnonymizerBase):
+    def __init__(self, anonymizer: PresidioAnonymizer):
         """
         Initialize the anonymizer manager.
         :param anonymizer: anonymizer instance
