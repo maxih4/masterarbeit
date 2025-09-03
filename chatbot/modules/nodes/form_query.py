@@ -5,6 +5,7 @@ import logging
 from typing import List, Literal
 
 from langgraph.types import Send, Command
+from openai import ContentFilterFinishReasonError
 from pydantic import BaseModel, Field
 
 from module_instances import model_manager
@@ -72,10 +73,19 @@ def form_query(state: State) -> Command[Literal["retrieve"]]:
     )
 
     # invoke model
-    answer, token_usage = invoke_model_and_receive_token_usage(
-        structured_model, message, "form_query"
-    )
-    questions = answer.questions
+
+    # answer, token_usage = invoke_model_and_receive_token_usage(
+    #     structured_model, message, "form_query"
+    # )
+    # questions = answer.questions
+    try:
+        answer, token_usage = invoke_model_and_receive_token_usage(
+            structured_model, message, "form_query"
+        )
+        questions = answer.questions
+    except ContentFilterFinishReasonError as e:
+        logger.warning("Exception", e)
+        questions = []
 
     logger.info(f"Generated Questions: {questions}")
     sends = [

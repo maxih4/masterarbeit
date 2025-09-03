@@ -1,11 +1,16 @@
 import asyncio
+import logging
+from types import SimpleNamespace
 
+from openai import ContentFilterFinishReasonError
 from pydantic import Field, BaseModel
 
 from module_instances import model_manager
 from modules.rag.prompts import generate_prompt, generate_multiple_prompt
 from modules.rag.state import State, QA
 from modules.rag.utils import invoke_model_and_receive_token_usage
+
+logger = logging.getLogger(__name__)
 
 
 async def generate(state: State):
@@ -15,7 +20,7 @@ async def generate(state: State):
     if len(qa_pairs) == 1:
         return await generate_answer(qa_pairs[0], "generate_answer")
 
-    print("multiple questions")
+    logger.info("multiple questions")
 
     # Generate answers in parallel
     answers = await asyncio.gather(
@@ -61,12 +66,26 @@ async def generate_answer(qa: QA, state: State):
     messages = generate_prompt.invoke({"question": question, "context": docs_content})
     structured_model = model_manager.llm_model.with_structured_output(ResponseFormatter)
 
+    logger.info(messages)
     # Use your utility
-    response, token_usage = invoke_model_and_receive_token_usage(
-        structured_model,
-        messages,
-        step="generate_answer",
-    )
+    # response, token_usage = invoke_model_and_receive_token_usage(
+    #     structured_model,
+    #     messages,
+    #     step="generate_answer",
+    # )
+    try:
+        response, token_usage = invoke_model_and_receive_token_usage(
+            structured_model,
+            messages,
+            step="generate_answer",
+        )
+    except ContentFilterFinishReasonError as e:
+        logger.warning("Content filter triggered in generate_answer", e)
+        # fallback object with the attrs your pipeline expects
+        response = ResponseFormatter(
+            answer="",
+        )
+        token_usage = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
 
     return {
         "answer": response.answer,
