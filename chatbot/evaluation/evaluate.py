@@ -9,6 +9,8 @@ import itertools
 import json
 from typing import Dict, List
 
+from progressbar import progressbar
+
 from modules.rag.state import State
 from utils.logging_config import configure_logging
 
@@ -58,7 +60,7 @@ def use_testset():
 # make request to rag pipeline
 
 
-counter = itertools.count(1001)
+counter = itertools.count(349701)
 
 
 def request_and_response(
@@ -197,11 +199,10 @@ def main():
     testset = use_testset()
 
     results: list[tuple[CsvInputObject, State]] = []
-    for row in testset:
-        logger.info(row.inhalt)
+    for idx, row in enumerate(progressbar(testset, redirect_stdout=True), start=1):
+        logger.info(f"Evaluating question {idx}: {row.inhalt}")
         response = request_and_response(connection, row)
         results.append((row, response))
-        # remove break to process all
 
     if results:
         write_csv(results, filename="evaluation_results.csv")
