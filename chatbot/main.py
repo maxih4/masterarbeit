@@ -50,7 +50,7 @@ async def search(sentence: str, thread_id: int):
 
     # normale Ausführung statt Stream
     result = await graph.ainvoke(
-        {"user_input": sentence, "qa_pairs": [], "token_usage": [], "input_tokens": 0},
+        {"user_input": sentence, "qc_pairs": [], "token_usage": [], "input_tokens": 0},
         config,
     )
 

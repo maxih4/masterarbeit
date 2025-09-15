@@ -60,7 +60,7 @@ def use_testset():
 # make request to rag pipeline
 
 
-counter = itertools.count(349701)
+counter = itertools.count(6667777)
 
 
 def request_and_response(
@@ -154,14 +154,14 @@ def __generate_row_element__(
             case h if h.startswith("generierte_frage_"):
                 idx = int(h.split("_")[-1])
                 val = (
-                    state["qa_pairs"][idx]["q"] if idx < len(state["qa_pairs"]) else ""
+                    state["qc_pairs"][idx]["q"] if idx < len(state["qc_pairs"]) else ""
                 )
 
             case h if h.startswith("kontext_frage_"):
                 idx = int(h.split("_")[-1])
                 val = (
-                    state["qa_pairs"][idx]["ctx"]
-                    if idx < len(state["qa_pairs"])
+                    state["qc_pairs"][idx]["ctx"]
+                    if idx < len(state["qc_pairs"])
                     else ""
                 )
 
@@ -200,6 +200,8 @@ def main():
 
     results: list[tuple[CsvInputObject, State]] = []
     for idx, row in enumerate(progressbar(testset, redirect_stdout=True), start=1):
+        # if idx != 17:
+        # continue
         logger.info(f"Evaluating question {idx}: {row.inhalt}")
         response = request_and_response(connection, row)
         results.append((row, response))

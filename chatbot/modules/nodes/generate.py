@@ -7,29 +7,29 @@ from pydantic import Field, BaseModel
 
 from module_instances import model_manager
 from modules.rag.prompts import generate_prompt, generate_multiple_prompt
-from modules.rag.state import State, QA
+from modules.rag.state import State, QC
 from modules.rag.utils import invoke_model_and_receive_token_usage
 
 logger = logging.getLogger(__name__)
 
 
 async def generate(state: State):
-    qa_pairs = state["qa_pairs"]
+    qc_pairs = state["qc_pairs"]
 
     # Shortcut for single question
-    if len(qa_pairs) == 1:
-        return await generate_answer(qa_pairs[0], "generate_answer")
+    if len(qc_pairs) == 1:
+        return await generate_answer(qc_pairs[0], "generate_answer")
 
     logger.info("multiple questions")
 
     # Generate answers in parallel
     answers = await asyncio.gather(
-        *[generate_answer(qa, "generate_answer") for qa in qa_pairs]
+        *[generate_answer(qc, "generate_answer") for qc in qc_pairs]
     )
 
     # Prepare input for summarization
     formatted_pairs = "\n".join(
-        f"- Q: {qa['q']}\n  A: {ans['answer']}" for qa, ans in zip(qa_pairs, answers)
+        f"- Q: {qc['q']}\n  A: {ans['answer']}" for qc, ans in zip(qc_pairs, answers)
     )
     user_input = state["user_input"]
 
@@ -60,9 +60,9 @@ async def generate(state: State):
     }
 
 
-async def generate_answer(qa: QA, state: State):
-    docs_content = "\n\n".join(doc.page_content for doc in qa["ctx"])
-    question = qa["q"]
+async def generate_answer(qc: QC, state: State):
+    docs_content = "\n\n".join(doc.page_content for doc in qc["ctx"])
+    question = qc["q"]
     messages = generate_prompt.invoke({"question": question, "context": docs_content})
     structured_model = model_manager.llm_model.with_structured_output(ResponseFormatter)
 
