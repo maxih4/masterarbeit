@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ResponseFormatter(BaseModel):
     """Structured output: erzwingt eine reine Textantwort."""
+
     answer: str = Field(..., description="The answer to the user's question.")
 
 
@@ -23,10 +24,14 @@ async def generate(state: State):
     """
     qc_pairs = state["qc_pairs"]
     if not qc_pairs:
-        return {"answer": "Keine beantwortbare Frage vorhanden.",
-                "input_tokens": 0, "output_tokens": 0, "token_usage": []}
+        return {
+            "answer": "Keine beantwortbare Frage vorhanden.",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "token_usage": [],
+        }
 
-    # Einzelfrage → Short-circuit
+    # Einzelfrage → direktes beantworten
     if len(qc_pairs) == 1:
         return await generate_answer(qc_pairs[0])
 
@@ -50,14 +55,20 @@ async def generate(state: State):
     )
 
     # Tokenstatistiken konsolidieren
-    all_input_tokens = sum(a["input_tokens"] for a in answers) + summary_usage["input_tokens"]
-    all_output_tokens = sum(a["output_tokens"] for a in answers) + summary_usage["output_tokens"]
+    all_input_tokens = (
+        sum(a["input_tokens"] for a in answers) + summary_usage["input_tokens"]
+    )
+    all_output_tokens = (
+        sum(a["output_tokens"] for a in answers) + summary_usage["output_tokens"]
+    )
     all_token_usage = sum((a["token_usage"] for a in answers), []) + [summary_usage]
 
-    return {"answer": final_response.answer,
-            "input_tokens": all_input_tokens,
-            "output_tokens": all_output_tokens,
-            "token_usage": all_token_usage}
+    return {
+        "answer": final_response.answer,
+        "input_tokens": all_input_tokens,
+        "output_tokens": all_output_tokens,
+        "token_usage": all_token_usage,
+    }
 
 
 async def generate_answer(qc: QC):
@@ -77,7 +88,9 @@ async def generate_answer(qc: QC):
         response = ResponseFormatter(answer="")
         token_usage = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
 
-    return {"answer": response.answer,
-            "input_tokens": token_usage["input_tokens"],
-            "output_tokens": token_usage["output_tokens"],
-            "token_usage": [token_usage]}
+    return {
+        "answer": response.answer,
+        "input_tokens": token_usage["input_tokens"],
+        "output_tokens": token_usage["output_tokens"],
+        "token_usage": [token_usage],
+    }
