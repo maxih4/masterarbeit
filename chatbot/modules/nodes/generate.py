@@ -18,14 +18,12 @@ async def generate(state: State):
 
     # Shortcut for single question
     if len(qc_pairs) == 1:
-        return await generate_answer(qc_pairs[0], "generate_answer")
+        return await generate_answer(qc_pairs[0])
 
     logger.info("multiple questions")
 
     # Generate answers in parallel
-    answers = await asyncio.gather(
-        *[generate_answer(qc, "generate_answer") for qc in qc_pairs]
-    )
+    answers = await asyncio.gather(*[generate_answer(qc) for qc in qc_pairs])
 
     # Prepare input for summarization
     formatted_pairs = "\n".join(
@@ -60,19 +58,13 @@ async def generate(state: State):
     }
 
 
-async def generate_answer(qc: QC, state: State):
+async def generate_answer(qc: QC):
     docs_content = "\n\n".join(doc.page_content for doc in qc["ctx"])
     question = qc["q"]
     messages = generate_prompt.invoke({"question": question, "context": docs_content})
     structured_model = model_manager.llm_model.with_structured_output(ResponseFormatter)
 
     logger.info(messages)
-    # Use your utility
-    # response, token_usage = invoke_model_and_receive_token_usage(
-    #     structured_model,
-    #     messages,
-    #     step="generate_answer",
-    # )
     try:
         response, token_usage = invoke_model_and_receive_token_usage(
             structured_model,
