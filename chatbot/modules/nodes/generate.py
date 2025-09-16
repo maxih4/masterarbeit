@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from types import SimpleNamespace
 
 from openai import ContentFilterFinishReasonError
 from pydantic import Field, BaseModel
