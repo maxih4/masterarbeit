@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from langchain_community.document_loaders import CSVLoader
@@ -5,8 +6,15 @@ from langchain_core.documents import Document
 from module_instances import model_manager
 from modules.input_managers.base_input_manager import BaseInputManager
 
+logger = logging.getLogger(__name__)
+
 
 class FractionInputManager(BaseInputManager):
+    """
+    Input manager for fraction rules (waste disposal fractions).
+    Handles CSV extraction and postprocessing of fraction rules.
+    """
+
     def __init__(self):
         """
         Initialize the FractionInputManager with a model manager.
@@ -15,26 +23,27 @@ class FractionInputManager(BaseInputManager):
 
     async def postprocess_documents(self, documents: List[Document]) -> List[Document]:
         """
-        Postprocess documents asynchronously by creating
-        a normalized description of each fraction.
+        Normalize extracted documents into clean fraction descriptions.
+        :param documents: list of raw documents from CSV
+        :return: list of processed documents
         """
-        all_documents_to_store = []
+        logger.info("[FractionInputManager] Starting postprocessing.")
+        all_documents_to_store: List[Document] = []
 
-        for document in documents:
-            # robuste Extraktion mit fallback
+        for i, document in enumerate(documents, start=1):
             fraktion = document.metadata.get("Fraktion", "Unbekannt")
             allowed = document.metadata.get("Was darf rein", "")
             not_allowed = document.metadata.get("Was darf NICHT rein", "")
-            source = document.metadata["source"]
-            row = document.metadata["row"]
+            source = document.metadata.get("source")
+            row = document.metadata.get("row")
+
             page_content = (
                 f"Die Fraktion {fraktion} darf folgendes enthalten: {allowed}. "
                 f"Die Fraktion {fraktion} darf folgendes nicht enthalten: {not_allowed}."
             )
 
             new_doc = Document(
-                page_content=f"Die Fraktion {fraktion} darf folgendes enthalten: {allowed}. "
-                f"Die Fraktion {fraktion} darf folgendes nicht enthalten: {not_allowed}.",
+                page_content=page_content,
                 metadata={
                     "source": source,
                     "row": row,
@@ -46,15 +55,24 @@ class FractionInputManager(BaseInputManager):
 
             all_documents_to_store.append(new_doc)
 
+            logger.debug(
+                f"[FractionInputManager] Processed row {row}: Fraktion={fraktion}, "
+                f"Allowed={allowed[:30]}..., NotAllowed={not_allowed[:30]}..."
+            )
+
+        logger.info(
+            f"[FractionInputManager] Postprocessed {len(all_documents_to_store)} documents."
+        )
         return all_documents_to_store
 
     async def extract_sentences_from_csv(self, csv_file: str) -> List[Document]:
         """
-        Extract sentences from a CSV file containing fraction rules asynchronously.
-
-        :param csv_file: Path to the CSV file.
-        :return: List of sentences extracted from the CSV file.
+        Extract fraction rules from CSV file asynchronously.
+        :param csv_file: path to the CSV file
+        :return: list of raw documents
         """
+        logger.info(f"[FractionInputManager] Loading CSV file: {csv_file}")
+
         loader = CSVLoader(
             file_path=csv_file,
             csv_args={"delimiter": ";"},
@@ -63,4 +81,10 @@ class FractionInputManager(BaseInputManager):
             content_columns=[],
         )
         data = await loader.aload()
+
+        logger.info(f"[FractionInputManager] Loaded {len(data)} rows from {csv_file}.")
+        if data:
+            logger.debug(
+                f"[FractionInputManager] First row metadata: {data[0].metadata}"
+            )
         return data

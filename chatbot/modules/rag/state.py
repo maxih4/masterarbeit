@@ -1,65 +1,90 @@
-from operator import add
-from typing import TypedDict, List, Dict, Annotated
+from typing import TypedDict, List, Annotated
 
 from langchain_core.documents import Document
 
 
 # Custom state for multiple parallel retrieve nodes
 class RetrieveState(TypedDict):
+    """
+    State used for parallel retrieve nodes.
+    :param classifier: classification label
+    :param question: user question
+    """
+
     classifier: str
     question: str
 
 
-# --- Merge/Reset-Reducer für Listen ---
 def merge_or_reset(old: list, new: list):
     """
-    Mergen oder Zurücksetzen einer Liste.
-    - Wenn 'new' falsy ist ([], None), wird ein RESET ausgeführt -> [].
-    - Andernfalls werden Elemente angehängt: old + new.
-    Hinweis: Diese Semantik erlaubt explizites Leeren durch Übergabe von [].
+    Merge or reset a list.
+    :param old: current list
+    :param new: new list, resets if falsy
+    :return: merged or reset list
     """
-    if not new:  # [] oder None => reset
+    if not new:  # [] or None => reset
         return []
-    return old + new  # normaler Merge
+    return old + new  # merge
 
 
-# --- Add/Reset-Reducer für Zähler ---
 def add_or_reset(old: int, new: int):
     """
-    Addieren oder Zurücksetzen eines Zählers.
-    - Wenn 'new' falsy ist (0, None), wird RESET ausgeführt -> 0.
-    - Andernfalls old + new.
-    Achtung: 'new == 0' bedeutet hier bewusst 'reset' und nicht 'nichts addieren'.
+    Add or reset a counter.
+    :param old: current counter
+    :param new: new value, resets if falsy
+    :return: added or reset value
     """
-    if not new:  # 0 oder None => reset
+    if not new:  # 0 or None => reset
         return 0
-    return old + new  # normaler Add
+    return old + new  # add
 
 
-# --- Mapping Frage -> Kontextdokumente ---
 class QC(TypedDict):
-    q: str  # gestellte Frage
-    ctx: List["Document"]  # zugehörige Kontext-Dokumente (z. B. für Attribution)
+    """
+    Mapping question to context documents.
+    :param q: user question
+    :param ctx: related context documents
+    """
+
+    q: str
+    ctx: List["Document"]
 
 
-# --- Tokenverbrauch pro Schritt/Knoten ---
 class TokenUsageEntry(TypedDict):
-    step_name: str  # Name des Graph-Schritts/Knotens
+    """
+    Token usage entry for one step.
+    :param step_name: name of the pipeline step
+    :param input_tokens: tokens used as input
+    :param output_tokens: tokens used as output
+    """
+
+    step_name: str
     input_tokens: int
     output_tokens: int
 
 
-# --- Statusobjekt des Chatbots / Graph-States ---
 class State(TypedDict):
-    questions: List[str]  # Einzel Fragen des Users
-    user_input: str  # letzte Nutzereingabe
-    answer: str  # aktuelle Antwort
-    last_answer: str  # vorherige Antwort
-    last_user_questions: List[str]  # letzte Nutzerfragen (Kurzverlauf)
-    classifier: str  # Klassifikation der Nutzeranfrage
-    # Zähler werden addiert oder explizit zurückgesetzt (siehe add_or_reset)
+    """
+    State object for chatbot/graph execution.
+    :param questions: generated questions
+    :param user_input: last user input
+    :param answer: current answer
+    :param last_answer: previous answer
+    :param last_user_questions: recent user questions
+    :param classifier: classification
+    :param input_tokens: tracked input tokens (add/reset)
+    :param output_tokens: tracked output tokens (add/reset)
+    :param token_usage: list of token usage entries per step(merge/reset)
+    :param qc_pairs: list of question-context mappings (merge/reset)
+    """
+
+    questions: List[str]
+    user_input: str
+    answer: str
+    last_answer: str
+    last_user_questions: List[str]
+    classifier: str
     input_tokens: Annotated[int, add_or_reset]
     output_tokens: Annotated[int, add_or_reset]
-    # Sammlungen werden gemerged oder explizit geleert (siehe merge_or_reset)
     token_usage: Annotated[List[TokenUsageEntry], merge_or_reset]
     qc_pairs: Annotated[List[QC], merge_or_reset]

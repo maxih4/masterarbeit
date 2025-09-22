@@ -1,24 +1,5 @@
-#
-# @app.get("/search")
-# async def search(sentence: str):
-#     config = RunnableConfig(
-#         configurable={
-#             "thread_id": "1"
-#         }
-#     )
-#     graph =await ragManager.create_graph()
-#     if(graph is None):
-#         raise Exception("Graph is not initialized")
-#     result = await graph.ainvoke({"user_input": sentence}, config)
-#     return result
-#
-
-
 import logging
-
-from dotenv import load_dotenv
 from fastapi import FastAPI
-from fastapi.responses import StreamingResponse
 import uvicorn
 
 from modules.rag_manager import RagManager
@@ -42,18 +23,20 @@ ragManager = RagManager()
 @app.get("/search")
 async def search(sentence: str, thread_id: int):
     logger.info(f"Received search request: {sentence}")
+    # Pass thread id
     config = RunnableConfig(configurable={"thread_id": thread_id})
+    # Create graph
     graph = await ragManager.create_graph()
     if graph is None:
         logger.error("Graph is not initialized")
         raise Exception("Graph is not initialized")
 
-    # normale Ausführung statt Stream
+    # Invoke graph with empty state and user input
     result = await graph.ainvoke(
         {"user_input": sentence, "qc_pairs": [], "token_usage": [], "input_tokens": 0},
         config,
     )
-
+    # Return answer
     return result
 
 

@@ -1,5 +1,4 @@
-# Form query to one question
-
+# Form query node: reformulates user input into concrete questions
 
 import logging
 from typing import List, Literal
@@ -18,17 +17,22 @@ logger = logging.getLogger(__name__)
 
 
 def form_query(state: State) -> Command[Literal["retrieve"]]:
-    # Get all questions from last time
+    """
+    Reformulate user input into one or more concrete questions.
+    :param state: current graph state
+    :return: Command that updates state and fans out to 'retrieve' node(s)
+    """
+    # Extract history
     last_questions = state.get("questions", [])
+    last_answer = state.get("answer", "")
 
-    # Join with separator symbol
     questions_str = " | ".join(last_questions)
 
-    # get the generated answer from last time
-    last_answer = state.get("answer", "")
-    logger.info(f"Last questions: {last_questions}")
-    logger.info(f"Last answer: {last_answer}")
+    logger.info("[FormQuery] Starting query formation.")
+    logger.debug(f"[FormQuery] Last questions: {last_questions}")
+    logger.debug(f"[FormQuery] Last answer: {last_answer}")
 
+    # System instructions
     instructions = (
         "You are an expert assistant for a recycling company's question-answering system. "
         "Your task is to extract and rewrite multiple distinct and concrete user questions from a single input. "
@@ -38,31 +42,32 @@ def form_query(state: State) -> Command[Literal["retrieve"]]:
         "- Be clear, short, and self-contained."
     )
 
+    # Examples
     positive_examples = (
         "Wohin gehört Metall entsorgt?",
         "Dürfen Dachziegel in den Sperrmüll?",
-        "Darf in den Sperrmüll Container auch ein Fahrrad?"
-        "Kann ich mit Paypal bezahlen?"
+        "Darf in den Sperrmüll Container auch ein Fahrrad?",
+        "Kann ich mit Paypal bezahlen?",
         "Wird ein Wunschtermin eingehalten?",
         "Wie lange im Vorraus muss ich einen Container bestellen?",
     )
-
     negative_examples = (
-        "1. Können Holz, Bauschutt und Fliesen in den gleichen Container entsorgt werden? -> Mehrere Dinge zusammengeführt zu einer Frage. Nur eine Entitität pro Frage",
-        "2. Was gehört da rein? -> Nicht spezifisch genug, fehlende Entititäten",
-        "3. Gehört Glas in den Sperrmüll? Kann ich Glas in den Sperrmüll Container werfen? -> Mehrfach die Gleiche Frage. Nur eine Frage zum gleichen Thema",
-        "4. 'Können Metall und Glas im Sperrmüll abgelegt werden? -> Mehrere Abfallfragen kombiniert. FALSCH!  ",
-    )
-    human_input_with_additional_information = (
-        f"User Input: {state["user_input"]}",
-        f"Chat History (optional): last_questions: {questions_str} last_answer: {last_answer}",
+        "1. Können Holz, Bauschutt und Fliesen in den gleichen Container entsorgt werden? -> Multiple items combined. Wrong.",
+        "2. Was gehört da rein? -> Not specific enough, missing entity.",
+        "3. Gehört Glas in den Sperrmüll? Kann ich Glas in den Sperrmüll Container werfen? -> Duplicate meaning. Wrong.",
+        "4. Können Metall und Glas im Sperrmüll abgelegt werden? -> Combined items. Wrong.",
     )
 
-    # generate structured output model
+    # Combine user input + history into one string
+    human_input_with_additional_information = (
+        f"User Input: {state['user_input']}\n"
+        f"Chat History: last_questions={questions_str}; last_answer={last_answer}"
+    )
+
+    # Structured output model
     structured_model = model_manager.llm_model.with_structured_output(ResponseFormatter)
 
-    # generate input message
-
+    # Build prompt
     message = prompt_template.invoke(
         {
             "instructions": instructions,
@@ -72,22 +77,23 @@ def form_query(state: State) -> Command[Literal["retrieve"]]:
         }
     )
 
-    # invoke model
+    logger.debug(f"[FormQuery] Prompt built for LLM: {message}")
 
-    # answer, token_usage = invoke_model_and_receive_token_usage(
-    #     structured_model, message, "form_query"
-    # )
-    # questions = answer.questions
+    # Call model
     try:
         answer, token_usage = invoke_model_and_receive_token_usage(
             structured_model, message, "form_query"
         )
         questions = answer.questions
+        logger.info(f"[FormQuery] Generated {len(questions)} questions.")
     except ContentFilterFinishReasonError as e:
-        logger.warning("Exception", e)
+        logger.warning(f"[FormQuery] Content filter triggered: {e}")
         questions = []
+        token_usage = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
 
-    logger.info(f"Generated Questions: {questions}")
+    logger.debug(f"[FormQuery] Questions: {questions}")
+
+    # Build sends (fan-out to retrieve)
     sends = [
         Send(
             "retrieve",
@@ -95,11 +101,8 @@ def form_query(state: State) -> Command[Literal["retrieve"]]:
         )
         for q in questions
     ]
+    logger.debug(f"[FormQuery] Sends prepared: {sends}")
 
-    logger.info(f"Sends: {sends}")
-
-    # `update` is the normal state‑update dict,
-    # `sends` is the fan‑out payload.
     return Command(
         update={
             "questions": questions,
@@ -112,10 +115,15 @@ def form_query(state: State) -> Command[Literal["retrieve"]]:
 
 
 class ResponseFormatter(BaseModel):
+    """
+    Structured output for query formation.
+    :param questions: list of reformulated questions as plain strings
+    """
+
     questions: List[str] = Field(
         ...,
         description=(
             "A list of reformulated or generated questions based on the user input. "
-            "Each item in the list is a single question as a string."
+            "Each item must be a single, self-contained question."
         ),
     )

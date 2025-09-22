@@ -29,13 +29,6 @@ model_manager = ModelManager(
         api_version=os.environ.get("OPENAI_API_VERSION_CLASSIFY"),
         max_tokens=None,
     ),
-    # embedding_model=HuggingFaceEmbeddings(
-    #     model_name="Qwen/Qwen3-Embedding-8B",
-    #     model_kwargs={"trust_remote_code": True},
-    # ),
-    # embedding_model=HuggingFaceEmbeddings(
-    #    model_name="sentence-transformers/all-MiniLM-L6-v2",
-    # ),
     embedding_model=AzureOpenAIEmbeddings(
         model=os.environ.get("EMBEDDING_MODEL_NAME"),
         azure_endpoint=os.environ.get("EMBEDDING_MODEL_API_ENDPOINT"),
@@ -67,9 +60,14 @@ def create_db_manager(drop_old: bool = False) -> DatabaseManager:
             collection_name=os.environ.get("VECTOR_COLLECTION_NAME"),
         ),
         conn_pool=AsyncConnectionPool(
-            conninfo="postgresql://postgres:example@localhost:5432/postgres?sslmode=disable",
+            conninfo=os.environ.get("POSTGRES_CONNECTION_STRING"),
             max_size=10,
             open=False,
+            kwargs={
+                "autocommit": True,
+                "connect_timeout": 5,
+                "prepare_threshold": None,
+            },
         ),
     )
 

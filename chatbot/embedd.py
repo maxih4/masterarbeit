@@ -15,7 +15,9 @@ load_dotenv()
 
 
 async def main():
-    db_manager = create_db_manager(drop_old=True)  # create inside async context
+    # Instantiate db_manager and remove old data
+    db_manager = create_db_manager(drop_old=True)
+    # Create array with all pipelines that should get embedded
     pipelines = [
         BaseCSVPipeline(
             FAQInputManager(), csv_path="csv/faq.csv", db_manager=db_manager
@@ -24,8 +26,6 @@ async def main():
             FractionInputManager(), csv_path="csv/fraktionen.csv", db_manager=db_manager
         ),
     ]
-
-    # await asyncio.gather(*(pipeline.run() for pipeline in pipelines))
 
     # First, create a list of coroutine objects by calling run() on each pipeline
     coroutines = [pipeline.run() for pipeline in pipelines]

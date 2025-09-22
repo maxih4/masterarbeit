@@ -2,10 +2,11 @@ import os
 
 from langgraph.graph import START, StateGraph
 from psycopg_pool import AsyncConnectionPool
-from typing import Literal, Optional
+from typing import Optional
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
+from module_instances import create_db_manager
 from modules.nodes import anonymize
 from modules.nodes.classify import classify, classify_path_function
 from modules.nodes.contact_customer_support import contact_customer_support
@@ -18,17 +19,19 @@ from modules.rag.state import State
 from modules.nodes.anonymize import anonymize
 
 
-# Define state for application
-
-
 class RagManager:
     def __init__(self):
         self._connection_pool: Optional[AsyncConnectionPool] = None
         self._graph: Optional[CompiledStateGraph] = None
 
+        """
+        Initialize the RagManager with a connection pool and a graph
+        """
+
     async def create_graph(self) -> Optional[CompiledStateGraph]:
         if self._graph is None:
             try:
+                # Add all nodes and edges to the graph
                 graph_builder = StateGraph(State)
                 graph_builder.add_node("retrieve", retrieve)
                 graph_builder.add_node("form_query", form_query)
@@ -41,36 +44,19 @@ class RagManager:
                 )
                 graph_builder.add_edge(START, "anonymize")
                 graph_builder.add_edge("anonymize", "classify")
+                # If pipeline should only run til classify node
                 if os.environ.get("ONLY_CLASSIFY") == "false":
                     graph_builder.add_conditional_edges(
                         "classify", path=classify_path_function
                     )
                 graph_builder.add_edge("retrieve", "generate")
-                connection_pool = await self._get_connection_pool()
+                connection_pool = create_db_manager().conn_pool
+                # Add checkpointer function from langgraph
                 if connection_pool:
+                    await connection_pool.open()
                     checkpointer = AsyncPostgresSaver(connection_pool)  # type: ignore
                     await checkpointer.setup()
-                self._graph = graph_builder.compile(checkpointer=checkpointer)
+                    self._graph = graph_builder.compile(checkpointer=checkpointer)
             except Exception as e:
                 raise e
         return self._graph
-
-    async def _get_connection_pool(self) -> AsyncConnectionPool:
-        if self._connection_pool is None:
-            try:
-                self._connection_pool = AsyncConnectionPool(
-                    "postgresql://postgres:example@localhost:5432/postgres?sslmode=disable",
-                    open=False,
-                    kwargs={
-                        "autocommit": True,
-                        "connect_timeout": 5,
-                        "prepare_threshold": None,
-                    },
-                )
-                await self._connection_pool.open()
-            except Exception as e:
-                raise e
-        return self._connection_pool
-
-
-######https://github.com/langchain-ai/langgraph/discussions/894#discussioncomment-10277417
