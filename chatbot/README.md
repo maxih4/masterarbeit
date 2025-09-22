@@ -18,7 +18,7 @@
 - Merging multiple questions into one concise answer  
 - Providing the user with a single, clear response  
 
-![Graph Nodes in the chatbot](../docs/output.png)
+![Graph Nodes in the chatbot](./docs/output.png)
 
 ## 📂 Repository Structure
 - `csv/` → input CSV files that are embedded and saved in the vector store  
