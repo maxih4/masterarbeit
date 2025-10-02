@@ -44,6 +44,9 @@ cd masterarbeit/chatbot/
 # install dependencies
 pip install -r requirements.txt
 
+# install spacy model for anonymization
+python -m spacy download de_core_news_lg
+
 # run docker compose
 cd docker
 docker compose up -d
