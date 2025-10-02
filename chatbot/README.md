@@ -34,6 +34,7 @@
 - Python 3.13  
 - Docker + Docker Compose  
 - Other dependencies (see `/requirements.txt`)  
+- Poetry
 
 ### Installation
 ```bash
@@ -42,10 +43,7 @@ git clone https://github.com/maxih4/masterarbeit
 cd masterarbeit/chatbot/
 
 # install dependencies
-pip install -r requirements.txt
-
-# install spacy model for anonymization
-python -m spacy download de_core_news_lg
+poetry install
 
 # run docker compose
 cd docker
@@ -56,7 +54,7 @@ cp .env.example .env
 # then fill out all variables
 
 # embed documents
-python embedd.py
+poetry run python embedd.py
 
 # start chatbot endpoint
-python main.py
+poetry run python main.py
