@@ -35,11 +35,11 @@ def use_connection():
     return http.client.HTTPConnection("localhost", 8000)
 
 
-# read files
+# read testset
 def use_testset():
     rows: list[CsvInputObject] = []
     base = pathlib.Path(__file__).parent
-    path = base / "files" / "input.csv"
+    path = base / "testset" / "input.csv"
     with open(path, "r", encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f, delimiter=";")
         for row in reader:
