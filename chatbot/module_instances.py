@@ -51,7 +51,7 @@ def create_db_manager(drop_old: bool = False) -> DatabaseManager:
     return DatabaseManager(
         vector_store=Milvus(
             embedding_function=model_manager.embedding_model,
-            connection_args={"uri": "http://localhost:19530"},
+            connection_args={"uri": os.environ.get("MILVUS_CONNECTION")},
             builtin_function=BM25BuiltInFunction(),
             vector_field=["dense", "sparse"],
             auto_id=True,
